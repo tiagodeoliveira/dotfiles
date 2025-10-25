@@ -14,14 +14,14 @@ Plug 'Shougo/unite.vim'
 Plug 'Quramy/vison'
 Plug 'vim-syntastic/syntastic'
 Plug 'airblade/vim-gitgutter'
-Plug 'terryma/vim-multiple-cursors'
 Plug 'tpope/vim-surround'
 Plug 'maksimr/vim-jsbeautify'
 Plug 'mcchrish/nnn.vim'
-Plug('glacambre/firenvim', {['do'] = function() vim.fn['firenvim#install'](0) end})
-Plug 'robitx/gp.nvim'
 Plug 'mrcjkb/rustaceanvim'
-Plug 'ishan9299/nvim-solarized-lua'
+Plug 'folke/tokyonight.nvim'
+Plug '3rd/image.nvim'
+Plug 'nvim-lua/plenary.nvim'
+Plug 'RRethy/vim-illuminate'
 vim.call('plug#end')
 
 -- Neovim specific settings
@@ -34,6 +34,10 @@ end
 
 vim.cmd('syntax enable')
 vim.cmd('filetype plugin indent on')
+
+-- auto-reload files
+vim.o.autoread = true
+vim.o.updatetime = 1000
 
 vim.o.scrolloff = 3
 vim.o.compatible = false
@@ -53,7 +57,8 @@ vim.o.incsearch = true
 vim.o.hlsearch = true
 vim.o.showmatch = true
 vim.o.showmode = true
-vim.o.list = true
+-- ommit non-printable characters
+vim.o.list = false
 vim.o.ruler = true
 vim.o.backup = false
 vim.o.writebackup = false
@@ -76,8 +81,38 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.mapleader = ','
 
+-- FZF configuration to show hidden files by default
+vim.cmd([[
+  let $FZF_DEFAULT_COMMAND = 'find . -type f -not -path "*/\.git/*"'
+]])
+
+-- buffer navigation 
+-- -- next and previous
 vim.keymap.set('', '<leader>b', vim.cmd.bnext)
 vim.keymap.set('', '<leader>bb', vim.cmd.bprev)
+-- -- leader 1,2,3...
+vim.keymap.set('n', '<leader>1', ':b1<CR>')
+vim.keymap.set('n', '<leader>2', ':b2<CR>')
+vim.keymap.set('n', '<leader>3', ':b3<CR>')
+vim.keymap.set('n', '<leader>4', ':b4<CR>')
+vim.keymap.set('n', '<leader>5', ':b5<CR>')
+vim.keymap.set('n', '<leader>6', ':b6<CR>')
+vim.keymap.set('n', '<leader>7', ':b7<CR>')
+vim.keymap.set('n', '<leader>8', ':b8<CR>')
+vim.keymap.set('n', '<leader>9', ':b9<CR>')
+-- -- close buffer
+vim.keymap.set('', '<leader>q', ':bd<CR>')
+
+-- FZF shortcuts
+vim.keymap.set('n', '<leader>f', ':Files<CR>')
+vim.keymap.set('n', '<leader>g', ':GFiles<CR>')
+vim.keymap.set('n', '<leader>r', ':Rg<CR>')
+vim.keymap.set('n', '<leader>l', ':BLines<CR>')
+vim.keymap.set('n', '<leader>h', ':History<CR>')
+vim.keymap.set('n', '<leader>a', ':Files -a<CR>')  -- Show all files including hidden
+
+vim.keymap.set('n', '<leader>-', ':NvimTreeResize -10<CR>')
+vim.keymap.set('n', '<leader>+', ':NvimTreeResize +10<CR>')
 
 -- Autocommands
 vim.api.nvim_create_autocmd('InsertEnter', {
@@ -95,22 +130,54 @@ vim.api.nvim_create_autocmd('StdinReadPre', {
   command = 'let s:std_in=1'
 })
 
-require("nvim-tree").setup()
-
-require("gp").setup({
-  providers = {
-    ollama = {
-      disable = false
-    },
-    openai = {
-      disable = true
-    }
-  }
+require("nvim-tree").setup({
+  view = {
+    width = 30,
+  },
+  filters = {
+    dotfiles = false,  -- Show dotfiles (hidden files)
+    custom = {},       -- Don't filter any files
+  },
+  git = {
+    ignore = false,    -- Show files in .gitignore
+  },
 })
 
---require('gen').setup({
-  --model = 'llama3.1',
-  --show_model = true,
-  --display_mode = 'split',
-  --debug = true
---})
+vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
+  command = "if mode() != 'c' | checktime | endif",
+  pattern = { "*" },
+})
+
+-- Set colorscheme after plugins load
+vim.cmd('colorscheme tokyonight')
+
+-- Image.nvim configuration
+require("image").setup({
+  backend = "kitty",  -- or "ueberzug" 
+  integrations = {
+    markdown = {
+      enabled = true,
+      clear_in_insert_mode = false,
+      download_remote_images = true,
+      only_render_image_at_cursor = false,
+      filetypes = { "markdown", "vimwiki" },
+    },
+    neorg = {
+      enabled = true,
+      clear_in_insert_mode = false,
+      download_remote_images = true,
+      only_render_image_at_cursor = false,
+      filetypes = { "norg" },
+    },
+  },
+  max_width = nil,
+  max_height = nil,
+  max_width_window_percentage = nil,
+  max_height_window_percentage = 50,
+  window_overlap_clear_enabled = false,
+  window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
+  editor_only_render_when_focused = false,
+  tmux_show_only_in_active_window = false,
+  hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp" },
+})
+
