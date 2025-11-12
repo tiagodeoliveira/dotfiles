@@ -3,28 +3,21 @@ local Plug = vim.fn['plug#']
 vim.call('plug#begin', '~/.config/nvim/plugged')
 Plug 'nvim-tree/nvim-web-devicons'
 Plug 'nvim-tree/nvim-tree.lua'
+Plug 'nvim-lualine/lualine.nvim'
 Plug 'junegunn/fzf'
 Plug('junegunn/fzf', {dir = '~/.fzf', ['do'] = './install --all'})
 Plug 'junegunn/fzf.vim'
-Plug 'rking/ag.vim'
 Plug 'scrooloose/nerdcommenter'
 Plug 'neomake/neomake'
-Plug 'vim-airline/vim-airline'
-Plug 'Shougo/unite.vim'
-Plug 'Quramy/vison'
-Plug 'vim-syntastic/syntastic'
 Plug 'airblade/vim-gitgutter'
-Plug 'tpope/vim-surround'
-Plug 'maksimr/vim-jsbeautify'
-Plug 'mcchrish/nnn.vim'
-Plug 'mrcjkb/rustaceanvim'
 Plug 'folke/tokyonight.nvim'
 Plug '3rd/image.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'RRethy/vim-illuminate'
+Plug 'fei6409/log-highlight.nvim'
+Plug 'neovim/nvim-lspconfig'
 vim.call('plug#end')
 
--- Neovim specific settings
 if vim.fn.has('nvim') == 1 then
   vim.api.nvim_create_autocmd('VimEnter', {
     pattern = '*',
@@ -35,15 +28,11 @@ end
 vim.cmd('syntax enable')
 vim.cmd('filetype plugin indent on')
 
--- auto-reload files
 vim.o.autoread = true
 vim.o.updatetime = 1000
-
 vim.o.scrolloff = 3
-vim.o.compatible = false
 vim.o.encoding = 'utf-8'
 vim.o.fileencoding = 'utf-8'
-vim.o.fileencodings = 'ucs-bom,utf8,prc'
 vim.o.showcmd = true
 vim.o.tabstop = 2
 vim.o.shiftwidth = 2
@@ -56,35 +45,17 @@ vim.o.smartcase = true
 vim.o.incsearch = true
 vim.o.hlsearch = true
 vim.o.showmatch = true
-vim.o.showmode = true
--- ommit non-printable characters
-vim.o.list = false
-vim.o.ruler = true
+vim.o.list = true
 vim.o.backup = false
 vim.o.writebackup = false
 vim.o.swapfile = false
 
 vim.opt.clipboard:append('unnamedplus')
-vim.opt.statusline:append('%#warningmsg#')
-vim.opt.statusline:append('%{SyntasticStatuslineFlag()}')
-vim.opt.statusline:append('%*')
 vim.opt.termguicolors = true
 
-vim.g['airline#extensions#tabline#enabled'] = 1
-vim.g.syntastic_always_populate_loc_list = 1
-vim.g.syntastic_auto_loc_list = 1
-vim.g.syntastic_check_on_open = 1
-vim.g.syntastic_check_on_wq = 0
-vim.g.syntastic_javascript_checkers = {'eslint'}
-vim.g.syntastic_javascript_eslint_exec = 'eslint_d'
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.mapleader = ','
-
--- FZF configuration to show hidden files by default
-vim.cmd([[
-  let $FZF_DEFAULT_COMMAND = 'find . -type f -not -path "*/\.git/*"'
-]])
 
 -- buffer navigation 
 -- -- next and previous
@@ -114,20 +85,27 @@ vim.keymap.set('n', '<leader>a', ':Files -a<CR>')  -- Show all files including h
 vim.keymap.set('n', '<leader>-', ':NvimTreeResize -10<CR>')
 vim.keymap.set('n', '<leader>+', ':NvimTreeResize +10<CR>')
 
+-- FZF configuration to show hidden files by default
+vim.cmd([[
+  let $FZF_DEFAULT_COMMAND = 'find . -type f -not -path "*/\.git/*"'
+]])
+
 -- Autocommands
 vim.api.nvim_create_autocmd('InsertEnter', {
   pattern = '*',
   command = 'set number'
 })
 
-vim.api.nvim_create_autocmd('InsertLeave', {
-  pattern = '*',
-  command = 'set relativenumber'
-})
-
 vim.api.nvim_create_autocmd('StdinReadPre', {
   pattern = '*',
   command = 'let s:std_in=1'
+})
+
+-- Auto-update location list with diagnostics
+vim.api.nvim_create_autocmd('DiagnosticChanged', {
+  callback = function()
+    vim.diagnostic.setloclist()
+  end,
 })
 
 require("nvim-tree").setup({
@@ -146,6 +124,10 @@ require("nvim-tree").setup({
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
   command = "if mode() != 'c' | checktime | endif",
   pattern = { "*" },
+})
+
+require("tokyonight").setup({
+  transparent = true
 })
 
 -- Set colorscheme after plugins load
@@ -180,4 +162,10 @@ require("image").setup({
   tmux_show_only_in_active_window = false,
   hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp" },
 })
+
+require('lualine').setup()
+
+vim.lsp.enable('ruff')
+vim.lsp.enable('clangd')
+vim.lsp.enable('yamlls')
 
