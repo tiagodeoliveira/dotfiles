@@ -16,6 +16,7 @@ Plug 'nvim-lua/plenary.nvim'
 Plug 'RRethy/vim-illuminate'
 Plug 'fei6409/log-highlight.nvim'
 Plug 'neovim/nvim-lspconfig'
+Plug('neoclide/coc.nvim', {branch='release'})
 vim.call('plug#end')
 
 if vim.fn.has('nvim') == 1 then
@@ -29,7 +30,7 @@ vim.cmd('syntax enable')
 vim.cmd('filetype plugin indent on')
 
 vim.o.autoread = true
-vim.o.updatetime = 1000
+vim.o.updatetime = 300
 vim.o.scrolloff = 3
 vim.o.encoding = 'utf-8'
 vim.o.fileencoding = 'utf-8'
@@ -52,6 +53,7 @@ vim.o.swapfile = false
 
 vim.opt.clipboard:append('unnamedplus')
 vim.opt.termguicolors = true
+vim.opt.signcolumn = "yes"
 
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
@@ -84,6 +86,14 @@ vim.keymap.set('n', '<leader>a', ':Files -a<CR>')  -- Show all files including h
 
 vim.keymap.set('n', '<leader>-', ':NvimTreeResize -10<CR>')
 vim.keymap.set('n', '<leader>+', ':NvimTreeResize +10<CR>')
+
+vim.keymap.set('i', '<CR>', function()
+  if vim.fn['coc#pum#visible']() == 1 then
+    return vim.fn['coc#pum#confirm']()
+  else
+    return vim.api.nvim_replace_termcodes('<CR>', true, false, true)
+  end
+end, { expr = true, noremap = true })
 
 -- FZF configuration to show hidden files by default
 vim.cmd([[
@@ -165,7 +175,7 @@ require("image").setup({
 
 require('lualine').setup()
 
-vim.lsp.enable('ruff')
-vim.lsp.enable('clangd')
-vim.lsp.enable('yamlls')
+--vim.lsp.enable('ruff')
+--vim.lsp.enable('clangd')
+--vim.lsp.enable('yamlls')
 
