@@ -21,3 +21,7 @@ fi
 
 cp tmux.conf $HOME/.tmux.conf
 # ---
+
+# --- ghostty
+cp ghostty_config $HOME/Library/Application\ Support/com.mitchellh.ghostty/config
+# ---

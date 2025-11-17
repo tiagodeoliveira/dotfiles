@@ -1,0 +1,16 @@
+font-size = 13
+font-family = Anka/Coder
+theme = TokyoNight
+cursor-style = block
+cursor-style-blink = true
+keybind = shift+enter=text:\n
+shell-integration-features = ssh-terminfo
+background-opacity = .9
+
+window-padding-x = 6
+window-padding-y = 4
+window-colorspace = "display-p3"
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 2
+font-thicken = true
+
