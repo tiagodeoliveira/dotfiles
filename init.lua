@@ -17,6 +17,7 @@ Plug 'RRethy/vim-illuminate'
 Plug 'fei6409/log-highlight.nvim'
 Plug 'neovim/nvim-lspconfig'
 Plug('neoclide/coc.nvim', {branch='release'})
+Plug 'github/copilot.vim'
 vim.call('plug#end')
 
 if vim.fn.has('nvim') == 1 then
@@ -86,6 +87,9 @@ vim.keymap.set('n', '<leader>a', ':Files -a<CR>')  -- Show all files including h
 
 vim.keymap.set('n', '<leader>-', ':NvimTreeResize -10<CR>')
 vim.keymap.set('n', '<leader>+', ':NvimTreeResize +10<CR>')
+
+vim.keymap.set('n', '<F1>', '<nop>', { noremap = true})
+vim.keymap.set('i', '<F1>', '<nop>', { noremap = true})
 
 vim.keymap.set('i', '<CR>', function()
   if vim.fn['coc#pum#visible']() == 1 then
@@ -173,9 +177,10 @@ require("image").setup({
   hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp" },
 })
 
-require('lualine').setup()
-
---vim.lsp.enable('ruff')
---vim.lsp.enable('clangd')
---vim.lsp.enable('yamlls')
+require('lualine').setup({
+  tabline = {
+    lualine_a = {'buffers'},
+    lualine_z = {'tabs'}
+  }
+})
 
