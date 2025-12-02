@@ -26,3 +26,9 @@ cp tmux.conf $HOME/.tmux.conf
 echo "======= Configuring ghostty"
 cp ghostty_config $HOME/Library/Application\ Support/com.mitchellh.ghostty/config
 # ---
+
+# --- git
+echo "======= Configuring git"
+cp gitconfig $HOME/.gitconfig
+cp gitignore_global $HOME/.gitignore_global
+# ---

@@ -1,0 +1,18 @@
+[user]
+	email = tiago@tiago.sh
+	name = Tiago Oliveira
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCpzZhDoOAH5g+ZyzIzikVkgpGsE36UDR2FB4dtm7xO
+[color]
+	ui = auto
+[core]
+	pager = less -FMRiX
+	excludesfile = $HOME/.gitignore_global
+[push]
+	default = simple
+  autoSetupRemote = true
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
