@@ -115,13 +115,6 @@ vim.api.nvim_create_autocmd('StdinReadPre', {
   command = 'let s:std_in=1'
 })
 
--- Auto-update location list with diagnostics
-vim.api.nvim_create_autocmd('DiagnosticChanged', {
-  callback = function()
-    vim.diagnostic.setloclist()
-  end,
-})
-
 require("nvim-tree").setup({
   view = {
     width = 30,
