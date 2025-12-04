@@ -6,7 +6,7 @@
 	ui = auto
 [core]
 	pager = less -FMRiX
-	excludesfile = $HOME/.gitignore_global
+	excludesfile = ~/.gitignore_global
 [push]
 	default = simple
   autoSetupRemote = true
