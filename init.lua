@@ -91,6 +91,9 @@ vim.keymap.set('n', '<leader>+', ':NvimTreeResize +10<CR>')
 vim.keymap.set('n', '<F1>', '<nop>', { noremap = true})
 vim.keymap.set('i', '<F1>', '<nop>', { noremap = true})
 
+vim.keymap.set('v', '>', '>gv')
+vim.keymap.set('v', '<', '<gv')
+
 vim.keymap.set('i', '<CR>', function()
   if vim.fn['coc#pum#visible']() == 1 then
     return vim.fn['coc#pum#confirm']()
@@ -125,6 +128,11 @@ require("nvim-tree").setup({
   },
   git = {
     ignore = false,    -- Show files in .gitignore
+  },
+  renderer = {
+    root_folder_label = ":t:s?$?/?",
+    highlight_git = "icon",
+    highlight_opened_files = "name",
   },
 })
 
