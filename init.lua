@@ -17,7 +17,6 @@ Plug 'RRethy/vim-illuminate'
 Plug 'fei6409/log-highlight.nvim'
 Plug 'neovim/nvim-lspconfig'
 Plug('neoclide/coc.nvim', {branch='release'})
-Plug 'github/copilot.vim'
 vim.call('plug#end')
 
 if vim.fn.has('nvim') == 1 then
