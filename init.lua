@@ -17,7 +17,7 @@ Plug 'RRethy/vim-illuminate'
 Plug 'fei6409/log-highlight.nvim'
 Plug 'neovim/nvim-lspconfig'
 Plug('neoclide/coc.nvim', {branch='release'})
-Plug 'glowing-vim-markdown-preview'
+Plug 'drewipson/glowing-vim-markdown-preview'
 Plug 'MeanderingProgrammer/render-markdown.nvim'
 vim.call('plug#end')
 
