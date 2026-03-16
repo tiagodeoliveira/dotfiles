@@ -17,6 +17,8 @@ Plug 'RRethy/vim-illuminate'
 Plug 'fei6409/log-highlight.nvim'
 Plug 'neovim/nvim-lspconfig'
 Plug('neoclide/coc.nvim', {branch='release'})
+Plug 'glowing-vim-markdown-preview'
+Plug 'MeanderingProgrammer/render-markdown.nvim'
 vim.call('plug#end')
 
 if vim.fn.has('nvim') == 1 then
@@ -92,6 +94,10 @@ vim.keymap.set('i', '<F1>', '<nop>', { noremap = true})
 
 vim.keymap.set('v', '>', '>gv')
 vim.keymap.set('v', '<', '<gv')
+
+-- Option+Arrow word jumping (insert and normal mode)
+vim.keymap.set({'i', 'n'}, '<M-Left>', '<C-Left>', { noremap = true })
+vim.keymap.set({'i', 'n'}, '<M-Right>', '<C-Right>', { noremap = true })
 
 vim.keymap.set('i', '<CR>', function()
   if vim.fn['coc#pum#visible']() == 1 then
