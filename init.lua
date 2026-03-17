@@ -153,6 +153,10 @@ require("tokyonight").setup({
 -- Set colorscheme after plugins load
 vim.cmd('colorscheme tokyonight')
 
+vim.o.title = true
+-- getcwd(): project path; fnamemodify(..., ':t') = last path component (project dir)
+vim.o.titlestring = "nvim - %{fnamemodify(getcwd(), ':t')} · %t"
+
 -- Image.nvim configuration
 require("image").setup({
   backend = "kitty",  -- or "ueberzug" 
