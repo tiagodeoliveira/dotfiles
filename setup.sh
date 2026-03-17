@@ -1,5 +1,37 @@
 #!/bin/bash
 
+# --- dependency checks
+echo "======= Checking dependencies"
+
+if ! command -v zsh &>/dev/null; then
+  echo "ERROR: zsh is not installed"
+  exit 1
+fi
+
+if ! command -v tmux &>/dev/null; then
+  echo "ERROR: tmux is not installed"
+  exit 1
+fi
+
+if ! command -v bash &>/dev/null; then
+  echo "ERROR: bash is not installed"
+  exit 1
+fi
+
+BASH_VERSION_INSTALLED=$(bash --version | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+if [[ "$BASH_VERSION_INSTALLED" != "5.3.9" ]]; then
+  echo "ERROR: bash 5.3.9 required, found $BASH_VERSION_INSTALLED"
+  exit 1
+fi
+
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  echo "ERROR: oh-my-zsh is not installed (expected at ~/.oh-my-zsh)"
+  exit 1
+fi
+
+echo "All dependencies found"
+# ---
+
 # --- nvim
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim
@@ -24,7 +56,11 @@ cp tmux.conf $HOME/.tmux.conf
 
 # --- ghostty
 echo "======= Configuring ghostty"
-cp ghostty_config $HOME/Library/Application\ Support/com.mitchellh.ghostty/config
+if [[ -d "$HOME/Library/Application Support/com.mitchellh.ghostty" ]]; then
+  cp ghostty_config "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+else
+  echo "Ghostty config directory not found, skipping"
+fi
 # ---
 
 # --- git
