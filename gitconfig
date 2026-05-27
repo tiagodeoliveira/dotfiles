@@ -5,8 +5,8 @@
 [color]
 	ui = auto
 [core]
-	pager = less -FMRiX
 	excludesfile = ~/.gitignore_global
+  pager = hunk pager
 [push]
 	default = simple
   autoSetupRemote = true
