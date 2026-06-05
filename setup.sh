@@ -1,5 +1,81 @@
 #!/bin/bash
 
+# --- xcode command line tools
+echo "======= Checking Xcode Command Line Tools"
+if ! xcode-select -p &>/dev/null; then
+  echo "Triggering Xcode CLT installer..."
+  xcode-select --install
+  echo "Complete the install in the popup, then press Enter to continue..."
+  read -r
+else
+  echo "Xcode CLT already installed"
+fi
+# ---
+
+# --- homebrew
+echo "======= Checking Homebrew"
+if ! command -v brew &>/dev/null; then
+  echo "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+else
+  echo "Homebrew already installed"
+fi
+# load brew into current shell session so brew commands below work
+# (shellenv only auto-runs in login shells; this script is non-login)
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+# ---
+
+# --- brew packages
+# canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
+echo "======= Installing Homebrew packages"
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf)
+for pkg in "${BREW_PACKAGES[@]}"; do
+  if brew list --formula "$pkg" &>/dev/null; then
+    echo "  [skip] $pkg already installed"
+  else
+    echo "  [install] $pkg"
+    brew install "$pkg"
+  fi
+done
+# ---
+
+# --- ssh key
+echo "======= Checking SSH key"
+SSH_KEY="$HOME/.ssh/id_ed25519"
+if [[ -f "$SSH_KEY" ]]; then
+  echo "SSH key already exists at $SSH_KEY"
+else
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  # source the key comment from the dotfile gitconfig (this script may run before ~/.gitconfig is deployed)
+  KEY_COMMENT="$(git config --file gitconfig user.email 2>/dev/null || echo "$(whoami)@$(hostname)")"
+  ssh-keygen -t ed25519 -f "$SSH_KEY" -C "$KEY_COMMENT" -N ""
+  echo "Generated $SSH_KEY"
+fi
+# ---
+
+# --- ssh allowed_signers (local git signature verification)
+echo "======= Configuring ssh allowed_signers"
+ALLOWED_SIGNERS="$HOME/.ssh/allowed_signers"
+PUB_KEY="$HOME/.ssh/id_ed25519.pub"
+if [[ -f "$ALLOWED_SIGNERS" ]]; then
+  echo "$ALLOWED_SIGNERS already exists, skipping"
+elif [[ -f "$PUB_KEY" ]]; then
+  GIT_EMAIL="$(git config --file gitconfig user.email)"
+  # format: <principal> namespaces="<list>" <key_type> <key_data>
+  # namespaces="git" restricts trust to commit signing only
+  KEY_FIELDS="$(awk '{print $1, $2}' "$PUB_KEY")"
+  echo "$GIT_EMAIL namespaces=\"git\" $KEY_FIELDS" > "$ALLOWED_SIGNERS"
+  echo "Wrote $ALLOWED_SIGNERS"
+else
+  echo "$PUB_KEY not found, skipping allowed_signers"
+fi
+# ---
+
 # --- dependency checks
 echo "======= Checking dependencies"
 
@@ -19,8 +95,10 @@ if ! command -v bash &>/dev/null; then
 fi
 
 BASH_VERSION_INSTALLED=$(bash --version | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-if [[ "$BASH_VERSION_INSTALLED" != "5.3.9" ]]; then
-  echo "ERROR: bash 5.3.9 required, found $BASH_VERSION_INSTALLED"
+BASH_MAJOR=${BASH_VERSION_INSTALLED%%.*}
+BASH_MINOR=$(echo "$BASH_VERSION_INSTALLED" | cut -d. -f2)
+if (( BASH_MAJOR < 5 )) || (( BASH_MAJOR == 5 && BASH_MINOR < 3 )); then
+  echo "ERROR: bash >= 5.3 required, found $BASH_VERSION_INSTALLED"
   exit 1
 fi
 
@@ -60,6 +138,43 @@ if [[ -d "$HOME/Library/Application Support/com.mitchellh.ghostty" ]]; then
   cp ghostty_config "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 else
   echo "Ghostty config directory not found, skipping"
+fi
+# ---
+
+# --- zsh
+# Managed-block model: replace just the marked block in ~/.zshrc; leave the
+# rest (machine-specific PATH, dev tool injections, etc.) untouched.
+echo "======= Configuring zsh"
+ZSHRC="$HOME/.zshrc"
+ZSHRC_START="# >>> dotfiles managed >>>"
+ZSHRC_END="# <<< dotfiles managed <<<"
+
+if [[ ! -f zshrc ]]; then
+  echo "zshrc not found in repo, skipping"
+elif [[ -f "$ZSHRC" ]] && grep -qF "$ZSHRC_START" "$ZSHRC"; then
+  echo "Updating managed block in $ZSHRC"
+  # Replace content between markers in place, preserving block position
+  # and everything outside the markers.
+  awk -v start="$ZSHRC_START" -v end="$ZSHRC_END" -v file="zshrc" '
+    $0 == start {
+      print start
+      while ((getline line < file) > 0) print line
+      close(file)
+      print end
+      skip = 1
+      next
+    }
+    $0 == end { skip = 0; next }
+    !skip { print }
+  ' "$ZSHRC" > "$ZSHRC.tmp" && mv "$ZSHRC.tmp" "$ZSHRC"
+else
+  echo "Appending managed block to $ZSHRC"
+  {
+    [[ -s "$ZSHRC" ]] && echo ""
+    echo "$ZSHRC_START"
+    cat zshrc
+    echo "$ZSHRC_END"
+  } >> "$ZSHRC"
 fi
 # ---
 
