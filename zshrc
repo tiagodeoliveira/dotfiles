@@ -34,6 +34,20 @@ alias la="ls -lAht"
 alias psql="docker run -ti --rm alpine/psql"
 tailf() { tail -f "$@" | bat --paging=never -l log --style='plain' --theme=TwoDark; }
 
+# Inside tmux, set the pane title to the SSH host while ssh runs so the pane
+# border shows the remote host instead of the local cwd basename.
+ssh() {
+  if [[ -n "$TMUX" ]]; then
+    local host="${@: -1}"
+    host="${host#*@}"
+    tmux select-pane -T "$host"
+    command ssh "$@"
+    tmux select-pane -T ""
+  else
+    command ssh "$@"
+  fi
+}
+
 export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
 
 # put brew on PATH (Apple Silicon: /opt/homebrew; Intel: /usr/local)
