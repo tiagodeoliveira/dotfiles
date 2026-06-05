@@ -41,16 +41,18 @@ for pkg in "${BREW_PACKAGES[@]}"; do
     brew install "$pkg"
   fi
 done
+# ---
 
-BREW_CASKS=(claude-code)
-for cask in "${BREW_CASKS[@]}"; do
-  if brew list --cask "$cask" &>/dev/null; then
-    echo "  [skip cask] $cask already installed"
-  else
-    echo "  [install cask] $cask"
-    brew install --cask "$cask"
-  fi
-done
+# --- claude code
+# Use the official installer (self-updating ~/.local/share/claude/versions/*)
+# instead of a brew cask, which lags behind upstream.
+echo "======= Checking Claude Code"
+if command -v claude &>/dev/null; then
+  echo "Claude Code already installed at $(command -v claude)"
+else
+  echo "Installing Claude Code via official installer..."
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
 # ---
 
 # --- claude code skills
