@@ -41,6 +41,31 @@ for pkg in "${BREW_PACKAGES[@]}"; do
     brew install "$pkg"
   fi
 done
+
+BREW_CASKS=(claude-code)
+for cask in "${BREW_CASKS[@]}"; do
+  if brew list --cask "$cask" &>/dev/null; then
+    echo "  [skip cask] $cask already installed"
+  else
+    echo "  [install cask] $cask"
+    brew install --cask "$cask"
+  fi
+done
+# ---
+
+# --- claude code skills
+# Wire up brew-installed tool skills under ~/.claude/skills/. Symlink against
+# /opt/homebrew/opt/<formula>/... (version-stable; survives brew upgrade).
+echo "======= Configuring Claude Code skills"
+HUNK_SKILL_TARGET="/opt/homebrew/opt/hunk/libexec/skills/hunk-review/SKILL.md"
+HUNK_SKILL_LINK="$HOME/.claude/skills/hunk-review/SKILL.md"
+if [[ -f "$HUNK_SKILL_TARGET" ]]; then
+  mkdir -p "$(dirname "$HUNK_SKILL_LINK")"
+  ln -sf "$HUNK_SKILL_TARGET" "$HUNK_SKILL_LINK"
+  echo "Linked hunk-review -> $HUNK_SKILL_TARGET"
+else
+  echo "hunk skill not found at $HUNK_SKILL_TARGET, skipping"
+fi
 # ---
 
 # --- ssh key
