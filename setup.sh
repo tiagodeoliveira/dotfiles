@@ -137,6 +137,18 @@ fi
 echo "All dependencies found"
 # ---
 
+# --- mise runtimes
+# Editor tooling needs runtimes managed by mise:
+#  - stable Python 3: debugpy powers nvim-dap; pudb is the standalone TUI debugger
+#  - Node 22 LTS for coc.nvim (Node 25 breaks coc-pyright's Web Storage localStorage)
+# Put mise shims on PATH so the headless nvim PlugInstall below resolves python3/node.
+echo "======= Installing mise runtimes"
+eval "$(mise activate bash --shims)"
+mise use -g python@3.13
+mise use -g node@22
+mise exec python@3.13 -- python -m pip install --upgrade pip debugpy pudb
+# ---
+
 # --- nvim
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim

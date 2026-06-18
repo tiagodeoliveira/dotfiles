@@ -19,7 +19,23 @@ Plug 'neovim/nvim-lspconfig'
 Plug('neoclide/coc.nvim', {branch='release'})
 Plug 'drewipson/glowing-vim-markdown-preview'
 Plug 'MeanderingProgrammer/render-markdown.nvim'
+-- DAP (debugging)
+Plug 'mfussenegger/nvim-dap'
+Plug 'rcarriga/nvim-dap-ui'
+Plug 'nvim-neotest/nvim-nio'          -- required by nvim-dap-ui
+Plug 'mfussenegger/nvim-dap-python'   -- python adapter glue
+Plug 'theHamsta/nvim-dap-virtual-text'-- show variable values inline
 vim.call('plug#end')
+
+-- coc.nvim runs on Node. Odd "Current" releases (e.g. 25) break coc-pyright with a
+-- Web Storage localStorage error, so pin coc to Node 22 LTS explicitly -- a guard
+-- that holds even if the global `node` later drifts to a non-LTS release. Resolve
+-- via mise so it works regardless of home dir, mise data location, or patch version.
+-- Must be set before coc starts its language servers.
+local node22 = vim.trim(vim.fn.system({ 'mise', 'where', 'node@22' }))
+if vim.v.shell_error == 0 and node22 ~= '' then
+  vim.g.coc_node_path = node22 .. '/bin/node'
+end
 
 if vim.fn.has('nvim') == 1 then
   vim.api.nvim_create_autocmd('VimEnter', {
@@ -193,4 +209,74 @@ require('lualine').setup({
     lualine_z = {'tabs'}
   }
 })
+
+-- ============================================================================
+-- DAP: line-by-line debugging (python via debugpy)
+-- ============================================================================
+local dap = require('dap')
+local dapui = require('dapui')
+
+-- Point dap-python at the active python3 on PATH (mise-managed). It must have
+-- debugpy + your project deps installed; setup.sh provisions the global one.
+local python3 = vim.fn.exepath('python3')
+require('dap-python').setup(python3 ~= '' and python3 or 'python3')
+
+dapui.setup()
+require('nvim-dap-virtual-text').setup()
+
+-- Auto open/close the UI panes when a session starts/ends
+dap.listeners.before.attach.dapui_config       = function() dapui.open() end
+dap.listeners.before.launch.dapui_config        = function() dapui.open() end
+dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end
+dap.listeners.before.event_exited.dapui_config     = function() dapui.close() end
+
+-- Breakpoint sign in the gutter
+vim.fn.sign_define('DapBreakpoint', { text = '●', texthl = 'DiagnosticError', linehl = '', numhl = '' })
+
+-- Keymaps: F-keys for stepping, <leader>d* for the rest
+vim.keymap.set('n', '<F5>',  dap.continue,          { desc = 'DAP continue/start' })
+vim.keymap.set('n', '<F10>', dap.step_over,         { desc = 'DAP step over' })
+vim.keymap.set('n', '<F11>', dap.step_into,         { desc = 'DAP step into' })
+vim.keymap.set('n', '<F12>', dap.step_out,          { desc = 'DAP step out' })
+vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { desc = 'DAP toggle breakpoint' })
+vim.keymap.set('n', '<leader>dB', function()
+  dap.set_breakpoint(vim.fn.input('Breakpoint condition: '))
+end, { desc = 'DAP conditional breakpoint' })
+vim.keymap.set('n', '<leader>dr', dap.repl.open,    { desc = 'DAP open REPL' })
+vim.keymap.set('n', '<leader>du', dapui.toggle,     { desc = 'DAP toggle UI' })
+vim.keymap.set('n', '<leader>dt', dap.terminate,    { desc = 'DAP terminate' })
+-- Eval: word under cursor (normal) or visual selection -> floating value.
+-- Press the same key again to jump INTO the float and expand nested values.
+vim.keymap.set({ 'n', 'v' }, '<leader>de', function() dapui.eval() end, { desc = 'DAP eval expression' })
+
+-- ============================================================================
+-- KEYMAP CHEAT-SHEET  (leader = ",")  -- keep in sync when you add mappings
+-- ============================================================================
+--
+-- BUFFERS
+--   ,b            next buffer            ,bb           previous buffer
+--   ,1 .. ,9      jump to buffer 1..9    ,q            close buffer
+--
+-- FILES / SEARCH (fzf)
+--   ,f            Files                  ,g            Git files
+--   ,r            Rg (grep in project)   ,l            BLines (lines in buffer)
+--   ,h            History                ,a            Files incl. hidden
+--
+-- NVIM-TREE
+--   ,-            shrink tree (-10)      ,+            widen tree (+10)
+--
+-- EDITING
+--   > / <  (visual) reindent, keep selection
+--   M-Left / M-Right   jump word left/right (insert & normal)
+--   <CR>   (insert)    confirm coc completion if popup is open
+--   <F1>               disabled (no-op)
+--
+-- DEBUG (nvim-dap)  -- panes: <C-w>h/j/k/l to move between them
+--   <F5>          continue / start       ,db           toggle breakpoint
+--   <F10>         step over              ,dB           conditional breakpoint
+--   <F11>         step into              ,dr           open REPL
+--   <F12>         step out               ,du           toggle DAP UI
+--   ,dt           terminate              ,de           eval (cursor / visual)
+--   in UI panes:  i = add watch   <CR> = expand   e = edit   d = remove
+-- ============================================================================
 
