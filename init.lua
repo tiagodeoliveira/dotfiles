@@ -221,6 +221,29 @@ local dapui = require('dapui')
 local python3 = vim.fn.exepath('python3')
 require('dap-python').setup(python3 ~= '' and python3 or 'python3')
 
+-- C / C++ via lldb-dap (ships with Xcode). Resolve through xcrun so there is no
+-- hardcoded Xcode path. Reuses the same DAP keymaps and UI as the Python setup.
+local lldb_dap = vim.trim(vim.fn.system({ 'xcrun', '-f', 'lldb-dap' }))
+if vim.v.shell_error == 0 and lldb_dap ~= '' then
+  dap.adapters.lldb = { type = 'executable', command = lldb_dap, name = 'lldb' }
+  dap.configurations.c = {
+    {
+      name = 'Launch (lldb)',
+      type = 'lldb',
+      request = 'launch',
+      program = function()
+        return vim.fn.input('Executable: ', vim.fn.getcwd() .. '/', 'file')
+      end,
+      args = function()
+        return vim.split(vim.fn.input('Args: '), ' ', { trimempty = true })
+      end,
+      cwd = '${workspaceFolder}',
+      stopOnEntry = false,
+    },
+  }
+  dap.configurations.cpp = dap.configurations.c
+end
+
 dapui.setup()
 require('nvim-dap-virtual-text').setup()
 
@@ -249,6 +272,17 @@ vim.keymap.set('n', '<leader>dt', dap.terminate,    { desc = 'DAP terminate' })
 -- Press the same key again to jump INTO the float and expand nested values.
 vim.keymap.set({ 'n', 'v' }, '<leader>de', function() dapui.eval() end, { desc = 'DAP eval expression' })
 
+-- tmux-style window zoom: ,z fills the screen with the current window (via a temp
+-- tab) and ,z again restores the exact prior layout. Works on any window,
+-- including the DAP UI panes.
+vim.keymap.set('n', '<leader>z', function()
+  if vim.fn.winnr('$') > 1 then
+    vim.cmd('tab split')        -- zoom in
+  elseif vim.fn.tabpagenr('$') > 1 then
+    vim.cmd('tabclose')         -- zoom out
+  end
+end, { desc = 'Zoom window (tmux-style)' })
+
 -- ============================================================================
 -- KEYMAP CHEAT-SHEET  (leader = ",")  -- keep in sync when you add mappings
 -- ============================================================================
@@ -271,7 +305,12 @@ vim.keymap.set({ 'n', 'v' }, '<leader>de', function() dapui.eval() end, { desc =
 --   <CR>   (insert)    confirm coc completion if popup is open
 --   <F1>               disabled (no-op)
 --
--- DEBUG (nvim-dap)  -- panes: <C-w>h/j/k/l to move between them
+-- WINDOWS
+--   ,z            zoom / unzoom current window (tmux-style)
+--   <C-w>h/j/k/l  move between windows (incl. DAP panes)
+--
+-- DEBUG (nvim-dap)  -- Python (debugpy) + C/C++ (lldb-dap); same keys for both
+--                   -- panes: <C-w>h/j/k/l to move between them
 --   <F5>          continue / start       ,db           toggle breakpoint
 --   <F10>         step over              ,dB           conditional breakpoint
 --   <F11>         step into              ,dr           open REPL
