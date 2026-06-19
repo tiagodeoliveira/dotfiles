@@ -1,0 +1,8 @@
+{
+  // Pin pyright/coc-pyright to the mise-managed Python so it sees our installed
+  // packages (gguf, transformers, ...). The shim dynamically resolves to whichever
+  // mise Python is active in the current project, and survives version bumps.
+  // Without this, coc's subprocess resolves python3 from PATH (Homebrew/system),
+  // which lacks our deps -> spurious "module not installed" errors.
+  "python.pythonPath": "~/.local/share/mise/shims/python3"
+}

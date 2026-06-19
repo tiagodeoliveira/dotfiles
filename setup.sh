@@ -153,6 +153,7 @@ mise exec python@3.13 -- python -m pip install --upgrade pip debugpy pudb
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim
 cp init.lua $HOME/.config/nvim
+cp coc-settings.json $HOME/.config/nvim  # pins pyright to the mise python (sees our deps)
 
 if [[ ! -d "$HOME/.config/nvim/autoload" ]]; then
   curl -fLo $HOME/.config/nvim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
