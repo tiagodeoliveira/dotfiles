@@ -32,7 +32,7 @@ fi
 # --- brew packages
 # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
 echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf modem-dev/tap/hunk)
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk)
 for pkg in "${BREW_PACKAGES[@]}"; do
   if brew list --formula "$pkg" &>/dev/null; then
     echo "  [skip] $pkg already installed"
@@ -68,6 +68,14 @@ if [[ -f "$HUNK_SKILL_TARGET" ]]; then
 else
   echo "hunk skill not found at $HUNK_SKILL_TARGET, skipping"
 fi
+# ---
+
+# --- claude code user config
+# Global rules + RTK reference (CLAUDE.md @-imports RTK.md, so they must travel together)
+echo "======= Configuring Claude Code user rules"
+mkdir -p "$HOME/.claude"
+cp claude/CLAUDE.md "$HOME/.claude/CLAUDE.md"
+cp claude/RTK.md "$HOME/.claude/RTK.md"
 # ---
 
 # --- ssh key
@@ -149,6 +157,27 @@ mise use -g node@22
 mise exec python@3.13 -- python -m pip install --upgrade pip debugpy pudb
 # ---
 
+# --- mnemo (personal AI memory CLI)
+# Source-only install (no published npm package): clone, build, then
+# `npm install -g .` from the cli/ dir. Uses the active mise node 22.
+echo "======= Installing mnemo CLI"
+MNEMO_DIR="$HOME/src/github.com/tiagodeoliveira/mnemo"
+if command -v mnemo &>/dev/null; then
+  echo "mnemo already installed: $(mnemo --version 2>&1 | head -1)"
+else
+  if [[ ! -d "$MNEMO_DIR" ]]; then
+    mkdir -p "$(dirname "$MNEMO_DIR")"
+    git clone https://github.com/tiagodeoliveira/mnemo.git "$MNEMO_DIR"
+  fi
+  (
+    cd "$MNEMO_DIR/cli"
+    mise exec node@22 -- npm install
+    mise exec node@22 -- npm run build
+    mise exec node@22 -- npm install -g .
+  )
+fi
+# ---
+
 # --- nvim
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim
@@ -222,4 +251,19 @@ fi
 echo "======= Configuring git"
 cp gitconfig $HOME/.gitconfig
 cp gitignore_global $HOME/.gitignore_global
+# ---
+
+# --- manual follow-ups
+# Surface the work the script cannot do for the user (interactive auth, etc.)
+cat <<'EOF'
+
+======= Setup done. Manual steps left:
+
+  1. mnemo login          # Auth0 device flow for the memory CLI
+  2. claude               # then /login to authenticate Claude Code
+  3. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
+                          # then paste at https://github.com/settings/keys
+  4. tmux: launch a session, press prefix + I to install plugins via tpm
+
+EOF
 # ---
