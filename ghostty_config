@@ -5,7 +5,7 @@ cursor-style = block
 cursor-style-blink = true
 keybind = shift+enter=text:\n
 shell-integration-features = ssh-terminfo
-background-opacity = .9
+background-opacity = 1
 
 window-padding-x = 6
 window-padding-y = 4
