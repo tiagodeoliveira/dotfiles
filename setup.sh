@@ -168,23 +168,26 @@ mise exec python@3.13 -- python -m pip install --upgrade pip debugpy pudb
 # ---
 
 # --- mnemo (personal AI memory CLI)
-# Source-only install (no published npm package): clone, build, then
-# `npm install -g .` from the cli/ dir. Uses the active mise node 22.
+# Install from the latest GitHub release tarball, not a plain clone+build:
+# release.yml's publish-cli job stamps the real Auth0 domain/audience/client
+# id into cli/src/defaults.ts before building. A local build leaves those
+# blank (they're only set as GitHub Actions repo Variables), which breaks
+# `mnemo login` with a fetch error against an empty https:// URL.
 echo "======= Installing mnemo CLI"
-MNEMO_DIR="$HOME/src/github.com/tiagodeoliveira/mnemo"
 if command -v mnemo &>/dev/null; then
   echo "mnemo already installed: $(mnemo --version 2>&1 | head -1)"
 else
-  if [[ ! -d "$MNEMO_DIR" ]]; then
-    mkdir -p "$(dirname "$MNEMO_DIR")"
-    git clone https://github.com/tiagodeoliveira/mnemo.git "$MNEMO_DIR"
+  MNEMO_TARBALL_URL=$(curl -fsSL https://api.github.com/repos/tiagodeoliveira/mnemo/releases/latest \
+    | grep -o '"browser_download_url": *"[^"]*mnemo-cli-[^"]*\.tgz"' \
+    | head -1 | cut -d'"' -f4)
+  if [[ -z "$MNEMO_TARBALL_URL" ]]; then
+    echo "ERROR: no mnemo-cli release tarball found on GitHub; cut a release (tag v*) first"
+    exit 1
   fi
-  (
-    cd "$MNEMO_DIR/cli"
-    mise exec node@22 -- npm install
-    mise exec node@22 -- npm run build
-    mise exec node@22 -- npm install -g .
-  )
+  MNEMO_TGZ="$(mktemp -t mnemo-cli).tgz"
+  curl -fsSL "$MNEMO_TARBALL_URL" -o "$MNEMO_TGZ"
+  mise exec node@22 -- npm install -g "$MNEMO_TGZ"
+  rm -f "$MNEMO_TGZ"
 fi
 # ---
 
