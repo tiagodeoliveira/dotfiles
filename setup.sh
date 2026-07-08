@@ -13,6 +13,9 @@ fi
 # ---
 
 # --- homebrew
+# NONINTERACTIVE=1 covers both the installer below and every `brew` call
+# later in this script (formula installs, taps, etc.) - equivalent to apt -y.
+export NONINTERACTIVE=1
 echo "======= Checking Homebrew"
 if ! command -v brew &>/dev/null; then
   echo "Installing Homebrew..."
@@ -26,6 +29,18 @@ if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
+fi
+# ---
+
+# --- oh-my-zsh
+echo "======= Checking oh-my-zsh"
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  echo "Installing oh-my-zsh..."
+  # CHSH/RUNZSH=no: skip the shell-change prompt and the "drop into zsh now" step.
+  # KEEP_ZSHRC=yes: don't clobber an existing ~/.zshrc; our own managed-block step below handles it.
+  CHSH=no RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+else
+  echo "oh-my-zsh already installed"
 fi
 # ---
 
@@ -137,11 +152,6 @@ if (( BASH_MAJOR < 5 )) || (( BASH_MAJOR == 5 && BASH_MINOR < 3 )); then
   exit 1
 fi
 
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  echo "ERROR: oh-my-zsh is not installed (expected at ~/.oh-my-zsh)"
-  exit 1
-fi
-
 echo "All dependencies found"
 # ---
 
@@ -199,6 +209,15 @@ if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
 fi
 
 cp tmux.conf $HOME/.tmux.conf
+
+# tpm's install_plugins reads @plugin entries off a running tmux server, so
+# drive it from a throwaway detached session instead of a manual prefix + I.
+echo "Installing tmux plugins via tpm..."
+tmux start-server
+tmux new-session -d -s __dotfiles_setup
+tmux source-file "$HOME/.tmux.conf"
+"$HOME/.tmux/plugins/tpm/bin/install_plugins"
+tmux kill-session -t __dotfiles_setup
 # ---
 
 # --- ghostty
@@ -263,7 +282,6 @@ cat <<'EOF'
   2. claude               # then /login to authenticate Claude Code
   3. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
                           # then paste at https://github.com/settings/keys
-  4. tmux: launch a session, press prefix + I to install plugins via tpm
 
 EOF
 # ---

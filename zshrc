@@ -2,7 +2,6 @@ export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="nvim"
 
 ZSH_THEME="agnoster"
-DEFAULT_USER="tiago"
 
 setopt glob_dots null_glob
 setopt extendedhistory
