@@ -44,4 +44,10 @@ If the task can be solved without code, don't write code.
 
 Bias: lean and assertive over bloated and complex.
 
+## Personal memory & meeting tools
+Two personal MCP servers persist context across sessions. Both are usually deferred — load them via ToolSearch the moment they're relevant, don't wait to be asked.
+
+- **mnemo** (cross-session memory): before treating a task as a blank slate, `recall_memories` or `search_memories` for relevant prior context — preferences, project facts, past episodes. After non-trivial work, findings, or decisions, persist it: `push_event` for a conversation-slice summary, `bootstrap_document` for a full artifact (e.g. a doc just written). Use project namespaces (e.g. `Axon`) to scope facts. Push what's worth recalling later, not a transcript of everything.
+- **auris** (meeting transcripts): when a past meeting is referenced by name, date, or topic, use `search_meetings` / `get_meeting` / `get_meeting_transcript` instead of asking for a pasted transcript or PDF. `get_moment_screenshot` retrieves the actual screenshot image for a flagged moment, not just its text summary.
+
 @RTK.md

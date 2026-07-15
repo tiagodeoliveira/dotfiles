@@ -191,6 +191,46 @@ else
 fi
 # ---
 
+# --- auris (personal meeting-transcription CLI)
+# Same release-tarball approach as mnemo above: release.yml stamps the real
+# Auth0 domain/audience/client id into the build before publishing, so a
+# local build or plain npm install leaves those blank and breaks `auris login`.
+echo "======= Installing auris CLI"
+if command -v auris &>/dev/null; then
+  echo "auris already installed at $(command -v auris)"
+else
+  AURIS_TARBALL_URL=$(curl -fsSL https://api.github.com/repos/tiagodeoliveira/auris/releases/latest \
+    | grep -o '"browser_download_url": *"[^"]*auris-cli-[^"]*\.tgz"' \
+    | head -1 | cut -d'"' -f4)
+  if [[ -z "$AURIS_TARBALL_URL" ]]; then
+    echo "ERROR: no auris-cli release tarball found on GitHub; cut a release (tag v*) first"
+    exit 1
+  fi
+  AURIS_TGZ="$(mktemp -t auris-cli).tgz"
+  curl -fsSL "$AURIS_TARBALL_URL" -o "$AURIS_TGZ"
+  mise exec node@22 -- npm install -g "$AURIS_TGZ"
+  rm -f "$AURIS_TGZ"
+fi
+# ---
+
+# --- claude code mcp registration (mnemo + auris)
+# Wire up the personal memory/meeting MCP servers now that both CLIs and
+# Claude Code itself are installed. -s user scope makes them available in
+# every project, matching how CLAUDE.md documents them as always-on.
+echo "======= Registering mnemo and auris MCP servers"
+MISE_NODE_BIN="$HOME/.local/share/mise/installs/node/22/bin"
+if claude mcp get mnemo &>/dev/null; then
+  echo "mnemo MCP already registered"
+else
+  claude mcp add -s user mnemo -- node "$MISE_NODE_BIN/mnemo-mcp"
+fi
+if claude mcp get auris &>/dev/null; then
+  echo "auris MCP already registered"
+else
+  claude mcp add -s user auris -- node "$MISE_NODE_BIN/auris-mcp"
+fi
+# ---
+
 # --- nvim
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim
@@ -282,8 +322,9 @@ cat <<'EOF'
 ======= Setup done. Manual steps left:
 
   1. mnemo login          # Auth0 device flow for the memory CLI
-  2. claude               # then /login to authenticate Claude Code
-  3. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
+  2. auris login          # Auth0 device flow for the meeting CLI
+  3. claude               # then /login to authenticate Claude Code
+  4. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
                           # then paste at https://github.com/settings/keys
 
 EOF
