@@ -47,7 +47,7 @@ fi
 # --- brew packages
 # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
 echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep)
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq)
 for pkg in "${BREW_PACKAGES[@]}"; do
   if brew list --formula "$pkg" &>/dev/null; then
     echo "  [skip] $pkg already installed"
@@ -229,6 +229,34 @@ if claude mcp get auris &>/dev/null; then
 else
   claude mcp add -s user auris -- node "$MISE_NODE_BIN/auris-mcp"
 fi
+# ---
+
+# --- agentoast (menu bar toast for Claude Code Stop/permission-prompt events)
+echo "======= Checking agentoast"
+if brew list --cask agentoast &>/dev/null; then
+  echo "agentoast already installed"
+else
+  echo "Installing agentoast..."
+  brew install --cask shuntaka9576/tap/agentoast
+fi
+
+# Merge in just the Stop/Notification hooks -- settings.json also carries
+# rtk's/mnemo's hooks and unrelated personal settings (model, plugins, theme),
+# so this must not overwrite the file wholesale.
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+mkdir -p "$(dirname "$CLAUDE_SETTINGS")"
+[[ -f "$CLAUDE_SETTINGS" ]] || echo '{}' > "$CLAUDE_SETTINGS"
+for event in Stop Notification; do
+  HAS_HOOK=$(jq --arg ev "$event" '(.hooks[$ev] // []) | any(.hooks[]?.command == "agentoast hook claude")' "$CLAUDE_SETTINGS")
+  if [[ "$HAS_HOOK" != "true" ]]; then
+    jq --arg ev "$event" \
+      '.hooks[$ev] = ((.hooks[$ev] // []) + [{"matcher": "", "hooks": [{"type": "command", "command": "agentoast hook claude"}]}])' \
+      "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+    echo "Added $event hook for agentoast"
+  else
+    echo "$event hook for agentoast already present"
+  fi
+done
 # ---
 
 # --- nvim
