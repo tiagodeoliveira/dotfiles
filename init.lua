@@ -155,7 +155,12 @@ require("nvim-tree").setup({
     highlight_git = "icon",
     highlight_opened_files = "name",
   },
+  update_focused_file = {
+    enable = true,  -- reveal + expand to the current buffer on every jump (fzf, gd, buffer switch, ...)
+  },
 })
+
+vim.keymap.set('n', '<leader>e', ':NvimTreeFindFile<CR>')
 
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
   command = "if mode() != 'c' | checktime | endif",
@@ -207,6 +212,11 @@ require('lualine').setup({
   tabline = {
     lualine_a = {'buffers'},
     lualine_z = {'tabs'}
+  },
+  sections = {
+    -- path = 1: relative to cwd, so the statusline disambiguates same-named
+    -- files (e.g. multiple index.html) instead of showing the bare filename.
+    lualine_c = {{ 'filename', path = 1 }},
   }
 })
 
@@ -298,6 +308,7 @@ end, { desc = 'Zoom window (tmux-style)' })
 --
 -- NVIM-TREE
 --   ,-            shrink tree (-10)      ,+            widen tree (+10)
+--   ,e            reveal current file in tree (auto-syncs on jump too)
 --
 -- EDITING
 --   > / <  (visual) reindent, keep selection
