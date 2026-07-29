@@ -115,6 +115,14 @@ vim.keymap.set('v', '<', '<gv')
 vim.keymap.set({'i', 'n'}, '<M-Left>', '<C-Left>', { noremap = true })
 vim.keymap.set({'i', 'n'}, '<M-Right>', '<C-Right>', { noremap = true })
 
+-- Copy the current file's absolute path to the system clipboard (+ register,
+-- aliased to unnamed via 'clipboard=unnamedplus' above).
+vim.keymap.set('n', '<leader>cp', function()
+  local path = vim.fn.expand('%:p')
+  vim.fn.setreg('+', path)
+  print('Copied: ' .. path)
+end, { desc = 'Copy absolute file path' })
+
 vim.keymap.set('i', '<CR>', function()
   if vim.fn['coc#pum#visible']() == 1 then
     return vim.fn['coc#pum#confirm']()
@@ -305,6 +313,7 @@ end, { desc = 'Zoom window (tmux-style)' })
 --   ,f            Files                  ,g            Git files
 --   ,r            Rg (grep in project)   ,l            BLines (lines in buffer)
 --   ,h            History                ,a            Files incl. hidden
+--   ,cp           copy absolute file path to clipboard
 --
 -- NVIM-TREE
 --   ,-            shrink tree (-10)      ,+            widen tree (+10)
