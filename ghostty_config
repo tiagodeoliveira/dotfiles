@@ -14,3 +14,5 @@ mouse-hide-while-typing = true
 mouse-scroll-multiplier = 2
 font-thicken = true
 
+auto-update-channel = tip
+
