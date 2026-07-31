@@ -1,6 +1,11 @@
 export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="nvim"
 
+# practically-unlimited history; zsh has no literal "infinite" value, oh-my-zsh's
+# lib/history.zsh only raises HISTSIZE/SAVEHIST to a floor, so this sticks
+HISTSIZE=999999999
+SAVEHIST=999999999
+
 ZSH_THEME="agnoster"
 
 setopt glob_dots null_glob
