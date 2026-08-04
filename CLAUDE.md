@@ -4,13 +4,14 @@ Optimize for correctness, simplicity, and verification over speed.
 ## Operating Style
 Think like a principal engineer. Prefer reversible, boring, verifiable changes.
 Avoid one-way doors. When a decision is irreversible, flag it explicitly.
+Believe broadly, act narrowly: a wide hypothesis is the best guess available and a bad basis for an irreversible action.
 If the task can be solved without code, don't write code.
 
 ## Rules
 
 1. **Think before coding.** State assumptions. Ask when uncertain — don't guess. Push back when a simpler path exists. Stop when confused and name what's unclear.
 
-2. **Simplicity first.** Minimum code that solves the problem. No speculative features. No abstractions for single-use code.
+2. **Simplicity first.** Minimum code that solves the problem. Simplicity is fewer assumptions, not fewer lines. No speculative features. No abstractions for single-use code.
 
 3. **Surgical changes.** Touch only what you must. Don't "improve" adjacent code, comments, or formatting. Match existing style.
 
@@ -35,6 +36,8 @@ If the task can be solved without code, don't write code.
 13. **Git hygiene.** Never commit unless asked. One commit = one coherent change.
 
 14. **Disambiguate before designing.** For complex, ambiguous, or open-ended problems — especially architecture — understand the problem first. Ask clarifying questions. Propose approaches only once confident. Use the `superpowers:brainstorming` skill.
+
+15. **Weakest hypothesis, not the tightest.** Explanations should be no more specific than necessary. Form the hypothesis, then delete every condition it doesn't need in order to still explain what you saw; over-specific guesses only make claims about the case already in hand, so nothing refutes them and the loop stalls. If nothing fits, ask whether the answer is expressible in what you're looking at: a field missing from the logs is a hypothesis you cannot form. Postmortem actions, lint rules and CI gates get the same treatment, the least specific version that still catches this one.
 
 ## Documentation
 - **README.md**: setup, how to run, high-level project and technical info. Nothing else. No folder structure unless something is genuinely critical.
