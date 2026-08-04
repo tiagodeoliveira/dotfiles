@@ -1,5 +1,6 @@
 export ZSH="$HOME/.oh-my-zsh"
 export EDITOR="nvim"
+export CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1
 
 # practically-unlimited history; zsh has no literal "infinite" value, oh-my-zsh's
 # lib/history.zsh only raises HISTSIZE/SAVEHIST to a floor, so this sticks
