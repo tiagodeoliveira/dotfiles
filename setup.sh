@@ -47,7 +47,7 @@ fi
 # --- brew packages
 # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
 echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm)
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize)
 for pkg in "${BREW_PACKAGES[@]}"; do
   if brew list --formula "$pkg" &>/dev/null; then
     echo "  [skip] $pkg already installed"
@@ -56,6 +56,17 @@ for pkg in "${BREW_PACKAGES[@]}"; do
     brew install "$pkg"
   fi
 done
+# ---
+
+# --- uv (Python package/project manager)
+# Official installer, not brew -- self-updating and matches astral's own docs.
+echo "======= Checking uv"
+if command -v uv &>/dev/null; then
+  echo "uv already installed at $(command -v uv)"
+else
+  echo "Installing uv..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
 # ---
 
 # --- claude code
