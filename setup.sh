@@ -47,7 +47,7 @@ fi
 # --- brew packages
 # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
 echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize)
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx)
 for pkg in "${BREW_PACKAGES[@]}"; do
   if brew list --formula "$pkg" &>/dev/null; then
     echo "  [skip] $pkg already installed"

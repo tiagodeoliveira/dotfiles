@@ -13,7 +13,7 @@ setopt glob_dots null_glob
 setopt extendedhistory
 setopt extendedglob
 
-plugins=(git brew history aws history-substring-search)
+plugins=(git brew history aws history-substring-search kubectx kubectl)
 
 # both completion fpath entries land BEFORE oh-my-zsh sources, so its
 # single compinit run picks them up (avoids a second redundant compinit)
