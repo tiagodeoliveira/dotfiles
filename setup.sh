@@ -258,34 +258,6 @@ else
 fi
 # ---
 
-# --- agentoast (menu bar toast for Claude Code Stop/permission-prompt events)
-echo "======= Checking agentoast"
-if brew list --cask agentoast &>/dev/null; then
-  echo "agentoast already installed"
-else
-  echo "Installing agentoast..."
-  brew install --cask shuntaka9576/tap/agentoast
-fi
-
-# Merge in just the Stop/Notification hooks -- settings.json also carries
-# rtk's/mnemo's hooks and unrelated personal settings (model, plugins, theme),
-# so this must not overwrite the file wholesale.
-CLAUDE_SETTINGS="$HOME/.claude/settings.json"
-mkdir -p "$(dirname "$CLAUDE_SETTINGS")"
-[[ -f "$CLAUDE_SETTINGS" ]] || echo '{}' > "$CLAUDE_SETTINGS"
-for event in Stop Notification; do
-  HAS_HOOK=$(jq --arg ev "$event" '(.hooks[$ev] // []) | any(.hooks[]?.command == "agentoast hook claude")' "$CLAUDE_SETTINGS")
-  if [[ "$HAS_HOOK" != "true" ]]; then
-    jq --arg ev "$event" \
-      '.hooks[$ev] = ((.hooks[$ev] // []) + [{"matcher": "", "hooks": [{"type": "command", "command": "agentoast hook claude"}]}])' \
-      "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
-    echo "Added $event hook for agentoast"
-  else
-    echo "$event hook for agentoast already present"
-  fi
-done
-# ---
-
 # --- nvim
 echo "======= Configuring nvim"
 mkdir -p $HOME/.config/nvim
