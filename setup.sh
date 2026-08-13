@@ -242,6 +242,22 @@ else
 fi
 # ---
 
+# --- claude code notification channel
+# terminal_bell (not the default desktop notification) is what sets tmux's
+# window_bell_flag, which is what makes tmux2k flag/bold-color a window --
+# desktop notifications never touch that flag.
+echo "======= Configuring Claude Code notification channel"
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+mkdir -p "$(dirname "$CLAUDE_SETTINGS")"
+[[ -f "$CLAUDE_SETTINGS" ]] || echo '{}' > "$CLAUDE_SETTINGS"
+if [[ "$(jq -r '.preferredNotifChannel // ""' "$CLAUDE_SETTINGS")" != "terminal_bell" ]]; then
+  jq '.preferredNotifChannel = "terminal_bell"' "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+  echo "Set preferredNotifChannel = terminal_bell"
+else
+  echo "preferredNotifChannel already terminal_bell"
+fi
+# ---
+
 # --- agentoast (menu bar toast for Claude Code Stop/permission-prompt events)
 echo "======= Checking agentoast"
 if brew list --cask agentoast &>/dev/null; then
