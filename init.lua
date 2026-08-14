@@ -136,6 +136,26 @@ vim.cmd([[
   let $FZF_DEFAULT_COMMAND = 'find . -type f -not -path "*/\.git/*"'
 ]])
 
+-- fzf.vim's bundled preview.sh calls `bat --style="${BAT_STYLE:-numbers}"`,
+-- which drops bat's own default header -- add it back so :Rg previews show
+-- which file the selected line is in.
+vim.env.BAT_STYLE = 'numbers,header-filename'
+
+-- :Rg hardcodes --preview-window '+{2}/2' (scroll-to-center, 0 fixed header
+-- lines), which doesn't know about the 1-line file header BAT_STYLE now
+-- adds -- it scrolls the header off-screen for any match not near the top
+-- of a file. ~1 pins that line; +1 compensates the center-scroll math for
+-- it. This is fzf's own documented pattern (see `man fzf`, --preview-window
+-- section) for pairing a fixed bat header with scroll-to-center. Redefined
+-- here (not patched in the plugin) so `:PlugUpdate` doesn't wipe it out.
+vim.cmd([[
+  command! -bang -nargs=* Rg
+    \ call fzf#vim#grep(
+    \   "rg --column --line-number --no-heading --color=always --smart-case -- ".fzf#shellescape(<q-args>),
+    \   fzf#vim#with_preview({'options': ['--preview-window', '~1,+{2}+1/2']}),
+    \   <bang>0)
+]])
+
 -- Autocommands
 vim.api.nvim_create_autocmd('InsertEnter', {
   pattern = '*',
