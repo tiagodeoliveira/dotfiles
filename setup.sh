@@ -288,6 +288,18 @@ tmux new-session -d -s __dotfiles_setup
 tmux source-file "$HOME/.tmux.conf"
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
 tmux kill-session -t __dotfiles_setup
+
+# tmux2k's cpu-temp.sh greps ioreg output case-insensitively for "Temperature",
+# which also matches AverageTemperature/MinimumTemperature/MaximumTemperature
+# substrings inside ioreg's BatteryData blob, plus a separate VirtualTemperature
+# key -- producing garbage on top of the real reading. Tighten it to match only
+# the exact "Temperature" key. tpm's install_plugins only clones what's missing
+# (no re-pull of existing plugins), so this survives a normal setup.sh re-run.
+CPU_TEMP_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/cpu-temp.sh"
+if [[ -f "$CPU_TEMP_SCRIPT" ]] && ! grep -qF '"Temperature" =' "$CPU_TEMP_SCRIPT"; then
+  sed -i '' "s/grep -i \"Temperature\"/grep -F '\"Temperature\" ='/" "$CPU_TEMP_SCRIPT"
+  echo "Patched cpu-temp.sh ioreg grep"
+fi
 # ---
 
 # --- ghostty
