@@ -300,6 +300,29 @@ if [[ -f "$CPU_TEMP_SCRIPT" ]] && ! grep -qF '"Temperature" =' "$CPU_TEMP_SCRIPT
   sed -i '' "s/grep -i \"Temperature\"/grep -F '\"Temperature\" ='/" "$CPU_TEMP_SCRIPT"
   echo "Patched cpu-temp.sh ioreg grep"
 fi
+
+# tmux2k has no disk-usage widget. Its "custom" plugin ships as a bare
+# "Hello Tmux2K" placeholder template -- repurpose it to show disk usage.
+CUSTOM_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/custom.sh"
+if [[ -f "$CUSTOM_SCRIPT" ]] && ! grep -q "disk_percent" "$CUSTOM_SCRIPT"; then
+  cat > "$CUSTOM_SCRIPT" <<'EOF'
+#!/usr/bin/env bash
+
+current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$current_dir/../lib/utils.sh"
+
+custom_icon=$(get_tmux_option "@tmux2k-custom-icon" "")
+
+main() {
+    local disk_percent
+    disk_percent=$(df -h / | awk 'NR==2{print $5}')
+    echo "$custom_icon $(normalize_padding "$disk_percent" 4)"
+}
+
+main
+EOF
+  echo "Patched custom.sh to show disk usage"
+fi
 # ---
 
 # --- ghostty
