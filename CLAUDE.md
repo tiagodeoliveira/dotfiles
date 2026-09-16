@@ -47,6 +47,9 @@ If the task can be solved without code, don't write code.
 
 Bias: lean and assertive over bloated and complex.
 
+## Writing Style
+- **No scaffolding.** Never preface content with a sentence announcing its own structure ("two things keep it small: first, ...", "this does three things:"). Go straight into the content ("first, ...").
+
 ## Personal memory & meeting tools
 Two personal MCP servers persist context across sessions. Both are usually deferred — load them via ToolSearch the moment they're relevant, don't wait to be asked.
 
