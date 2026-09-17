@@ -42,6 +42,17 @@ alias la="ls -lAht"
 alias psql="docker run -ti --rm alpine/psql"
 tailf() { tail -f "$@" | bat --paging=never -l log --style='plain' --theme=TwoDark; }
 
+# yazi's official cd-on-exit wrapper: without this, quitting yazi leaves
+# the shell in the directory it started from, not the one you navigated to.
+function y() {
+	local tmp cwd
+	tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd" || builtin true
+	command rm -f -- "$tmp"
+}
+
 # Inside tmux, set the pane title to the SSH host while ssh runs so the pane
 # border shows the remote host instead of the local cwd basename.
 ssh() {
