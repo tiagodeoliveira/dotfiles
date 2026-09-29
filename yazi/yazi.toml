@@ -1,0 +1,76 @@
+[mgr]
+ratio = [1, 2, 5]
+
+# git.yazi: per-file git status indicators in the file list
+[[plugin.prepend_fetchers]]
+url = "*"
+run = "git"
+group = "git"
+
+[[plugin.prepend_fetchers]]
+url = "*/"
+run = "git"
+group = "git"
+
+# duckdb.yazi: tabular data preview (csv/tsv/json/parquet/txt/xlsx/duckdb)
+[[plugin.prepend_previewers]]
+url = "*.{csv,tsv,json,parquet,txt,xlsx,db,duckdb}"
+run = "duckdb"
+
+[[plugin.prepend_preloaders]]
+url = "*.{csv,tsv,json,parquet,txt,xlsx}"
+run = "duckdb"
+multi = false
+
+# rich-preview.yazi: markdown/rst/notebooks (csv/json owned by duckdb above)
+[[plugin.prepend_previewers]]
+url = "*.md"
+run = "rich-preview"
+
+[[plugin.prepend_previewers]]
+url = "*.rst"
+run = "rich-preview"
+
+[[plugin.prepend_previewers]]
+url = "*.ipynb"
+run = "rich-preview"
+
+# center-media.yazi: video/image centering + metadata (audio owned by exifaudio below)
+[[plugin.prepend_previewers]]
+mime = "{video,image}/*"
+run = "center-media"
+
+[[plugin.prepend_preloaders]]
+mime = "{video,image}/*"
+run = "center-media"
+
+[[plugin.prepend_previewers]]
+mime = "application/{subrip,postscript,illustrator,dvb.ait,vnd.adobe.illustrator,eps}"
+run = "center-media"
+
+[[plugin.prepend_previewers]]
+url = "*.{ai,eps,ait}"
+run = "center-media"
+
+[[plugin.prepend_preloaders]]
+mime = "application/{subrip,postscript,illustrator,dvb.ait,vnd.adobe.illustrator,eps}"
+run = "center-media"
+
+[[plugin.prepend_preloaders]]
+url = "*.{ai,eps,ait}"
+run = "center-media"
+
+# exifaudio.yazi: audio cover art + metadata
+[[plugin.prepend_previewers]]
+mime = "audio/*"
+run = "exifaudio"
+
+# exiftool.yazi: executable metadata
+[[plugin.prepend_previewers]]
+mime = "*executable*"
+run = "exiftool"
+
+# ouch.yazi: archive contents preview
+[[plugin.prepend_previewers]]
+mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}"
+run = "ouch"

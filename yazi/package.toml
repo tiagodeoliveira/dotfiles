@@ -1,0 +1,87 @@
+[[plugin.deps]]
+use = "yazi-rs/plugins:piper"
+rev = "7200d73"
+hash = "d1e0499cae5f3aeb628c267616d4b682"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:chmod"
+rev = "7200d73"
+hash = "87472b05a8c420100f6a2b9cde1e7746"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:diff"
+rev = "7200d73"
+hash = "14558d2829c0aa05e99c57de8f74d199"
+
+[[plugin.deps]]
+use = "pirafrank/what-size"
+rev = "1cb456f"
+hash = "7699acf73a1079f8a4afef5cec84ce73"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:zoom"
+rev = "7200d73"
+hash = "558bbb58e3dd36d488280a8f10e7b904"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:full-border"
+rev = "7200d73"
+hash = "f281261ff04ad7ec867c3f802a50835f"
+
+[[plugin.deps]]
+use = "Sonico98/exifaudio"
+rev = "4506f9d"
+hash = "4761fffb60a12d37096c34a356380cdf"
+
+[[plugin.deps]]
+use = "ENEmyr/center-media"
+rev = "3fca3a5"
+hash = "bb567d35068b64c80569c1d86f1a053a"
+
+[[plugin.deps]]
+use = "ndtoan96/ouch"
+rev = "596b666"
+hash = "c2f4f4aca257dcceafa9e3b828dbf1c9"
+
+[[plugin.deps]]
+use = "AleMenon/exiftool"
+rev = "4c35573"
+hash = "44ef03e4d7151fa4094dd6b87a553033"
+
+[[plugin.deps]]
+use = "wylie102/duckdb"
+rev = "3f8c863"
+hash = "87b9233a74325e95011670ed20bbd0d4"
+
+[[plugin.deps]]
+use = "AnirudhG07/rich-preview"
+rev = "02597c4"
+hash = "33982a6e2d6df07619a2a0fc163a0950"
+
+[[plugin.deps]]
+use = "barbanevosa/autosession"
+rev = "7a12b20"
+hash = "f9b76184511c983db7c6f719eea1e14d"
+
+[[plugin.deps]]
+use = "KKV9/compress"
+rev = "80e5268"
+hash = "868db729374b97871bc30b96d0e9061f"
+
+[[plugin.deps]]
+use = "GianniBYoung/rsync"
+rev = "b5c657a"
+hash = "72828957273094ed0ef52792e3290900"
+
+[[plugin.deps]]
+use = "uhs-robert/sshfs"
+rev = "a8b8903"
+hash = "8c1b36103121a66b37308afaf7124575"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:git"
+rev = "7200d73"
+hash = "347cc6b190eb0c2fd60513cc7ae37412"
+
+[flavor]
+deps = []

@@ -47,7 +47,7 @@ fi
 # --- brew packages
 # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
 echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier)
+BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier exiftool mediainfo ghostscript ouch duckdb rich-cli)
 for pkg in "${BREW_PACKAGES[@]}"; do
   if brew list --formula "$pkg" &>/dev/null; then
     echo "  [skip] $pkg already installed"
@@ -271,6 +271,31 @@ fi
 nvim +silent +PlugUpgrade +PlugUpdate +PlugInstall +PlugClean +qall
 # ---
 
+# --- yazi
+# package.toml pins the exact plugin set (revs/hashes); `ya pkg install`
+# reads it and fetches everything listed, no per-plugin `ya pkg add` needed.
+echo "======= Configuring yazi"
+mkdir -p "$HOME/.config/yazi"
+cp yazi/init.lua yazi/yazi.toml yazi/keymap.toml yazi/package.toml "$HOME/.config/yazi/"
+(cd "$HOME/.config/yazi" && ya pkg install)
+
+# duckdb.yazi has 3 open, unfixed upstream bugs against our exact yazi/DuckDB
+# versions (crash on non-tabular preview, DuckDB >=1.5 lambda-deprecation
+# warning leaking into preview, broken H/L scroll on yazi 26.x) -- `ya pkg
+# install` re-fetches the plugin fresh from git each run, so re-apply the fix.
+DUCKDB_MAIN="$HOME/.config/yazi/plugins/duckdb.yazi/main.lua"
+if [[ -f "$DUCKDB_MAIN" ]] && ! grep -qF "lambda_syntax" "$DUCKDB_MAIN"; then
+  patch -p1 "$DUCKDB_MAIN" < yazi/duckdb.yazi.patch
+fi
+# sshfs.yazi needs macFUSE, a kernel/system extension -- can't be installed
+# non-interactively (needs a sudo password prompt and System Settings
+# approval). See the manual follow-ups at the end of this script.
+if ! brew list --cask macfuse &>/dev/null; then
+  echo "macFUSE not installed -- sshfs.yazi won't work until you run:"
+  echo "  brew install --cask macfuse"
+fi
+# ---
+
 # --- tmux
 echo "======= Configuring tmux"
 if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
@@ -388,6 +413,10 @@ cat <<'EOF'
   3. claude               # then /login to authenticate Claude Code
   4. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
                           # then paste at https://github.com/settings/keys
+  5. brew install --cask macfuse   # then approve it in System Settings ->
+                          # Privacy & Security (and likely restart) before
+                          # sshfs.yazi (yazi plugin) will work
+                          # brew install --cask sshfs-mac   # after macfuse
 
 EOF
 # ---

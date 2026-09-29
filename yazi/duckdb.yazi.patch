@@ -1,0 +1,50 @@
+--- a/main.lua
++++ b/main.lua
+@@ -137,7 +137,9 @@
+ 	scrolled_columns = math.max(0, scrolled_columns + scroll_delta)
+ 	set_opts("scrolled_columns", scrolled_columns)
+ 
+-	ya.emit("seek", { "lateral scroll" })
++	-- yazi 26.x's seek expects a numeric units value; a non-numeric one
++	-- silently no-ops instead of triggering the redraw this is meant to force.
++	ya.emit("seek", { 0 })
+ end
+ 
+ -- Setup from init.lua: require("duckdb"):setup({ mode = "standard"/"summarized" })
+@@ -290,6 +292,10 @@
+ 		".mode duckbox",
+ 		".timer off",
+ 		"SET enable_progress_bar = false;",
++		-- DuckDB >=1.5 deprecates the "->" lambda arrow used in this plugin's
++		-- own summarize queries and prints a warning straight into stderr,
++		-- which the plugin then renders as if it were real query output.
++		"SET lambda_syntax = 'ENABLE_SINGLE_ARROW';",
+ 		string.format(".maxwidth %d", width),
+ 		string.format(".maxrows %d", height),
+ 		".highlight_results on",
+@@ -672,8 +678,10 @@
+ 	local base_query = generate_preload_query(job, mode, file_type, limit)
+ 	local query = string.format("COPY (%s) TO '%s' (FORMAT 'parquet');", base_query, target)
+ 	local output = run_query(job, query, nil, file_type)
+-	ya.dbg("stdout: " .. tostring(output.stdout))
+-	ya.dbg("stderr: " .. tostring(output.stderr))
++	if output then
++		ya.dbg("stdout: " .. tostring(output.stdout))
++		ya.dbg("stderr: " .. tostring(output.stderr))
++	end
+ 
+ 	if not output or (output.stderr and output.stderr ~= "") then
+ 		ya.err(
+@@ -758,8 +766,10 @@
+ 	local query = generate_peek_query(args.target, job, args.limit, args.offset, args.file_type, args.cache_str)
+ 	ya.dbg("query: " .. tostring(query))
+ 	local output = run_query(job, query, args.target, args.file_type)
+-	ya.dbg("stdout: " .. tostring(output.stdout))
+-	ya.dbg("stderr: " .. tostring(output.stderr))
++	if output then
++		ya.dbg("stdout: " .. tostring(output.stdout))
++		ya.dbg("stderr: " .. tostring(output.stderr))
++	end
+ 	if not output_is_valid(output, args.mode, job) then
+ 		if args.target == args.cache_url and args.scrolled_collumns == 0 then
+ 			add_to_list("bad_cache", args.cache_str)
