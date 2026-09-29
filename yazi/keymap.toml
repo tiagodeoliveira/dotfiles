@@ -71,12 +71,6 @@ on = ["g", "u"]
 run = "plugin duckdb -- -ui"
 desc = "Open with duckdb ui"
 
-# autosession.yazi -- repurposes plain quit into save-and-quit
-[[mgr.prepend_keymap]]
-on = ["q"]
-run = "plugin autosession -- save-and-quit"
-desc = "Save session and quit"
-
 # compress.yazi
 [[mgr.prepend_keymap]]
 on = ["c", "a", "a"]
