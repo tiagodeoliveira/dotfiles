@@ -1,3 +1,10 @@
+# command.yazi -- ad-hoc command palette, e.g. to try plugin invocations
+# without a permanent keybinding: "plugin zoom -- 1"
+[[mgr.prepend_keymap]]
+on = ["c", "p"]
+run = "plugin command"
+desc = "Open command palette"
+
 # chmod.yazi
 [[mgr.prepend_keymap]]
 on = ["c", "m"]
@@ -16,16 +23,39 @@ on = [".", "s"]
 run = "plugin what-size"
 desc = "Calc size of selection or cwd"
 
-# zoom.yazi
+# zoom.yazi -- yazi 26.x needs "--" before the arg, or a leading "-" gets
+# parsed as a flag to `plugin` itself (same issue duckdb.yazi hit).
 [[mgr.prepend_keymap]]
 on = "+"
-run = "plugin zoom 1"
+run = "plugin zoom -- 1"
 desc = "Zoom in hovered file"
 
 [[mgr.prepend_keymap]]
 on = "-"
-run = "plugin zoom -1"
+run = "plugin zoom -- -1"
 desc = "Zoom out hovered file"
+
+# zoom.yazi pan -- only has an effect once zoomed in; plain arrows/hjkl are
+# already yazi's own navigation, so pan uses Shift+Arrow instead.
+[[mgr.prepend_keymap]]
+on = "<S-Left>"
+run = "plugin zoom -- left"
+desc = "Pan zoomed image left"
+
+[[mgr.prepend_keymap]]
+on = "<S-Right>"
+run = "plugin zoom -- right"
+desc = "Pan zoomed image right"
+
+[[mgr.prepend_keymap]]
+on = "<S-Up>"
+run = "plugin zoom -- up"
+desc = "Pan zoomed image up"
+
+[[mgr.prepend_keymap]]
+on = "<S-Down>"
+run = "plugin zoom -- down"
+desc = "Pan zoomed image down"
 
 # center-media.yazi
 [[mgr.prepend_keymap]]

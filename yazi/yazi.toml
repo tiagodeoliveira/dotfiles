@@ -1,6 +1,21 @@
 [mgr]
 ratio = [1, 2, 5]
 
+# yazi's own default caps preview renders at 600x900px, well below what a
+# normal terminal pane actually has room for -- raise it so images fill
+# the available preview area instead of leaving it partly blank.
+[preview]
+max_width = 2000
+max_height = 2000
+
+# zoom.yazi: owns image previewing so zoom/pan state survives redraws --
+# without this, whatever else previews images would overwrite the zoomed
+# view on the next redraw (center-media narrowed to video/* below, so it
+# no longer competes for image/*).
+[[plugin.prepend_previewers]]
+mime = "image/*"
+run = "zoom"
+
 # git.yazi: per-file git status indicators in the file list
 [[plugin.prepend_fetchers]]
 url = "*"
@@ -35,13 +50,13 @@ run = "rich-preview"
 url = "*.ipynb"
 run = "rich-preview"
 
-# center-media.yazi: video/image centering + metadata (audio owned by exifaudio below)
+# center-media.yazi: video centering + metadata (images owned by zoom.yazi above, audio owned by exifaudio below)
 [[plugin.prepend_previewers]]
-mime = "{video,image}/*"
+mime = "video/*"
 run = "center-media"
 
 [[plugin.prepend_preloaders]]
-mime = "{video,image}/*"
+mime = "video/*"
 run = "center-media"
 
 [[plugin.prepend_previewers]]

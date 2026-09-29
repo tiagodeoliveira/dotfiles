@@ -279,6 +279,14 @@ mkdir -p "$HOME/.config/yazi"
 cp yazi/init.lua yazi/yazi.toml yazi/keymap.toml yazi/package.toml "$HOME/.config/yazi/"
 (cd "$HOME/.config/yazi" && ya pkg install)
 
+# zoom.yazi is modified heavily enough (crop-based zoom, panning, higher zoom
+# ceiling) that it's no longer the upstream plugin -- vendored directly here
+# instead of pinned in package.toml, so `ya pkg install` above doesn't touch it.
+mkdir -p "$HOME/.config/yazi/plugins/zoom.yazi"
+# -f: ya pkg install leaves plugin files read-only, which a plain cp can't
+# overwrite on a re-run
+cp -f yazi/zoom.yazi/main.lua yazi/zoom.yazi/LICENSE "$HOME/.config/yazi/plugins/zoom.yazi/"
+
 # duckdb.yazi has 3 open, unfixed upstream bugs against our exact yazi/DuckDB
 # versions (crash on non-tabular preview, DuckDB >=1.5 lambda-deprecation
 # warning leaking into preview, broken H/L scroll on yazi 26.x) -- `ya pkg
