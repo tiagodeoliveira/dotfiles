@@ -223,8 +223,11 @@ if [[ "$OS" == "Linux" ]]; then
   # (Ubuntu 24.04 apt ships 0.9), and ~/.local/bin precedes /usr/bin on PATH
   NVIM_OLD=0
   if command -v nvim &>/dev/null; then
-    NVIM_VER="$(nvim --version | head -1 | sed -E 's/^NVIM v?//')"
-    [[ "${NVIM_VER%%.*}" == 0 && "$(echo "$NVIM_VER" | cut -d. -f2)" -lt 11 ]] && NVIM_OLD=1
+    NVIM_OLD=1 # unrunnable or unparseable counts as too old
+    NVIM_VER="$(nvim --version 2>/dev/null | head -1 | sed -E 's/^NVIM v?//')" || true
+    if [[ "$NVIM_VER" =~ ^([0-9]+)\.([0-9]+) ]]; then
+      if [[ ${BASH_REMATCH[1]} -gt 0 || ${BASH_REMATCH[2]} -ge 11 ]]; then NVIM_OLD=0; fi
+    fi
   fi
   if ! command -v nvim &>/dev/null || [[ $NVIM_OLD -eq 1 ]]; then
     echo "  [install] nvim (release tarball)"

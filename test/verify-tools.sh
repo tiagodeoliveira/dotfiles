@@ -18,8 +18,12 @@ if [[ "$OS" == "Darwin" || "$ARCH" == "x86_64" ]]; then require resvg; fi
 
 # nvim-lspconfig needs Neovim >= 0.11
 if command -v nvim &>/dev/null; then
-  nv="$(nvim --version | head -1 | sed -E 's/^NVIM v?//')"
-  if [[ "${nv%%.*}" == 0 && "$(echo "$nv" | cut -d. -f2)" -lt 11 ]]; then fail "nvim too old (<0.11)"; fi
+  nv="$(nvim --version 2>/dev/null | head -1 | sed -E 's/^NVIM v?//')"
+  nv_ok=0
+  if [[ "$nv" =~ ^([0-9]+)\.([0-9]+) ]]; then
+    if [[ ${BASH_REMATCH[1]} -gt 0 || ${BASH_REMATCH[2]} -ge 11 ]]; then nv_ok=1; fi
+  fi
+  [[ $nv_ok -eq 1 ]] || fail "nvim too old (<0.11) or unrunnable"
 fi
 
 # yazi config and plugins
