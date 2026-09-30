@@ -300,7 +300,7 @@ if [[ "$OS" == "Linux" ]]; then
       *) "$1" --version ;;
     esac &>/dev/null
   }
-  for cmd in bat zoxide nvim fzf rg mediainfo exiftool mise yazi ya ouch duckdb just kustomize kubectx kubens hunk resvg; do
+  for cmd in bat zoxide nvim fzf rg mediainfo exiftool mise yazi ya ouch duckdb just kustomize kubectx kubens hunk; do
     if command -v "$cmd" &>/dev/null && ! runs_ok "$cmd"; then
       echo "  ERROR: $cmd is installed but does not run"
       LINUX_FAILED+=("$cmd")
@@ -314,6 +314,16 @@ if [[ "$OS" == "Linux" ]]; then
     echo "WARN: rtk is installed but does not run: the prebuilt $ARCH_GNU Linux build needs a newer glibc than this host has."
     echo "WARN: skipping rtk. To build it by hand (needs a Rust toolchain, e.g. 'mise use -g rust'):"
     echo "WARN:   cargo install --git https://github.com/rtk-ai/rtk --locked"
+  fi
+
+  # resvg (x86_64 only) is optional when its prebuilt binary cannot run (needs glibc >= 2.35); it only powers yazi SVG previews
+  RESVG_SKIPPED=""
+  if command -v resvg &>/dev/null && ! resvg --version &>/dev/null; then
+    RESVG_SKIPPED=1
+    rm -f "$HOME/.local/bin/resvg"
+    echo "WARN: resvg is installed but does not run: the prebuilt Linux build needs a newer glibc than this host has."
+    echo "WARN: skipping resvg (yazi SVG previews will not work). To build it by hand (needs a Rust toolchain, e.g. 'mise use -g rust'):"
+    echo "WARN:   cargo install resvg --locked"
   fi
   linux_gate
 fi
@@ -759,6 +769,12 @@ EOF
     cat <<'EOF'
   6. mise use -g rust && cargo install --git https://github.com/rtk-ai/rtk --locked && rtk init -g
                           # the prebuilt rtk needs a newer glibc than this host has
+EOF
+  fi
+  if [[ -n "${RESVG_SKIPPED:-}" ]]; then
+    cat <<'EOF'
+  7. mise use -g rust && cargo install resvg --locked
+                          # the prebuilt resvg needs a newer glibc than this host has (yazi SVG previews)
 EOF
   fi
 fi
