@@ -13,8 +13,6 @@ for t in zsh tmux bat zoxide nvim fzf rg jq magick gs mediainfo exiftool patch f
          yazi ya ouch duckdb rich just kustomize kubectx kubens rtk hunk pnpm mise uv claude mnemo auris; do
   require "$t"
 done
-# resvg publishes no aarch64 Linux build
-if [[ "$OS" == "Darwin" || "$ARCH" == "x86_64" ]]; then require resvg; fi
 
 # present is not enough: a binary built against a newer glibc is on PATH but dies on start
 runs_ok() {
@@ -32,19 +30,21 @@ for t in zsh tmux bat zoxide nvim fzf rg jq magick gs mediainfo exiftool patch f
          yazi ya ouch duckdb rich just kustomize kubectx kubens hunk pnpm mise uv claude mnemo auris; do
   if command -v "$t" &>/dev/null && ! runs_ok "$t"; then echo "DOES NOT RUN: $t"; failed=1; fi
 done
-if [[ "$OS" == "Darwin" || "$ARCH" == "x86_64" ]] && command -v resvg &>/dev/null && ! runs_ok resvg; then
-  echo "DOES NOT RUN: resvg"; failed=1
-fi
-
-# rtk's prebuilt aarch64 Linux build needs glibc >= 2.39; setup.sh treats it as optional there
-if command -v rtk &>/dev/null && ! runs_ok rtk; then
+# Prebuilt builds that need a newer glibc than the host has are optional; setup.sh skips them.
+# optional_if_old_glibc <tool> <min glibc> <only on this arch, or empty for any>
+optional_if_old_glibc() {
+  if command -v "$1" &>/dev/null && runs_ok "$1"; then return 0; fi
+  local glibc
   glibc="$(ldd --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+$')"
-  if [[ "$OS" == "Linux" && "$ARCH" == "aarch64" && -n "$glibc" && "$(printf '%s\n2.39\n' "$glibc" | sort -V | head -1)" != "2.39" ]]; then
-    echo "WARN: rtk does not run (glibc $glibc < 2.39 on aarch64); optional on this host"
+  if [[ "$OS" == "Linux" && ( -z "$3" || "$ARCH" == "$3" ) && -n "$glibc" && "$(printf '%s\n%s\n' "$glibc" "$2" | sort -V | head -1)" != "$2" ]]; then
+    echo "WARN: $1 does not run (glibc $glibc < $2); optional on this host"
   else
-    echo "DOES NOT RUN: rtk"; failed=1
+    echo "MISSING or DOES NOT RUN: $1"; failed=1
   fi
-fi
+}
+optional_if_old_glibc rtk 2.39 aarch64   # rtk's prebuilt aarch64 Linux build
+# resvg publishes no aarch64 Linux build, and setup.sh removes it when it cannot run
+if [[ "$OS" == "Darwin" || "$ARCH" == "x86_64" ]]; then optional_if_old_glibc resvg 2.35 ""; fi
 
 # nvim-lspconfig needs Neovim >= 0.11
 if command -v nvim &>/dev/null; then
