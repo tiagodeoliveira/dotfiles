@@ -463,7 +463,9 @@ echo "======= Installing mnemo CLI"
 if command -v mnemo &>/dev/null; then
   echo "mnemo already installed: $(mnemo --version 2>&1 | head -1)"
 else
-  MNEMO_TARBALL_URL=$(curl -fsSL https://api.github.com/repos/tiagodeoliveira/mnemo/releases/latest \
+  gh_auth=()
+  [[ -n "${GITHUB_TOKEN:-}" ]] && gh_auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+  MNEMO_TARBALL_URL=$(curl -fsSL "${gh_auth[@]}" https://api.github.com/repos/tiagodeoliveira/mnemo/releases/latest \
     | grep -o '"browser_download_url": *"[^"]*mnemo-cli-[^"]*\.tgz"' \
     | head -1 | cut -d'"' -f4)
   if [[ -z "$MNEMO_TARBALL_URL" ]]; then
@@ -485,7 +487,9 @@ echo "======= Installing auris CLI"
 if command -v auris &>/dev/null; then
   echo "auris already installed at $(command -v auris)"
 else
-  AURIS_TARBALL_URL=$(curl -fsSL https://api.github.com/repos/tiagodeoliveira/auris/releases/latest \
+  gh_auth=()
+  [[ -n "${GITHUB_TOKEN:-}" ]] && gh_auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+  AURIS_TARBALL_URL=$(curl -fsSL "${gh_auth[@]}" https://api.github.com/repos/tiagodeoliveira/auris/releases/latest \
     | grep -o '"browser_download_url": *"[^"]*auris-cli-[^"]*\.tgz"' \
     | head -1 | cut -d'"' -f4)
   if [[ -z "$AURIS_TARBALL_URL" ]]; then
