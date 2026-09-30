@@ -2,7 +2,7 @@
 # Runs setup.sh twice (idempotency) in a clean container per distro, then verify-tools.sh.
 # Usage: test/docker-test.sh [ubuntu|amazonlinux ...]   (default: both)
 # Env:   PLATFORM=linux/amd64  force CPU arch (default: host arch)
-#        AS_ROOT=1             run as root with no sudo in the path
+#        AS_ROOT=1             run as root with the sudo binary renamed away (exercises SUDO="")
 #        GITHUB_TOKEN          forwarded, avoids API rate limits
 set -o pipefail
 cd "$(dirname "$0")/.."
@@ -13,7 +13,11 @@ targets=("$@")
 platform_args=()
 [[ -n "${PLATFORM:-}" ]] && platform_args=(--platform "$PLATFORM")
 user_args=()
-[[ -n "${AS_ROOT:-}" ]] && user_args=(--user root -e HOME=/root)
+pre=""
+if [[ -n "${AS_ROOT:-}" ]]; then
+  user_args=(--user root -e HOME=/root)
+  pre='s=$(command -v sudo) && mv "$s" "$s.off"; command -v sudo >/dev/null && { echo "sudo still present"; exit 1; }; echo "sudo absent: ok"; '
+fi
 
 results=()
 rc=0
@@ -28,7 +32,7 @@ for t in "${targets[@]}"; do
   fi
   echo "======= [$t] running setup.sh x2 + verify (log: $log)"
   docker run --rm "${platform_args[@]}" "${user_args[@]}" ${GITHUB_TOKEN:+-e GITHUB_TOKEN} "$image" \
-    bash -c 'bash setup.sh && bash setup.sh && bash test/verify-tools.sh' 2>&1 | tee "$log"
+    bash -c "${pre}"'bash setup.sh && bash setup.sh && bash test/verify-tools.sh' 2>&1 | tee "$log"
   status=${PIPESTATUS[0]}
   if [[ $status -eq 0 ]] && grep -q "Setup done" "$log" && grep -q "verify-tools: OK" "$log"; then
     results+=("$t: PASS")
