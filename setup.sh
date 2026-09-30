@@ -434,6 +434,16 @@ mise use -g node@22
 mise exec python@3.13 -- python -m pip install --upgrade pip debugpy pudb
 # ---
 
+# --- linux extras (need uv and node, so they run after the mise section)
+# pnpm and rich-cli are brew formulas on macOS; on Linux they come from npm and uv.
+if [[ "$OS" == "Linux" ]]; then
+  echo "======= Installing Linux extras (pnpm, rich-cli)"
+  command -v pnpm &>/dev/null || mise exec node@22 -- npm install -g pnpm || LINUX_FAILED+=(pnpm)
+  command -v rich &>/dev/null || uv tool install rich-cli || LINUX_FAILED+=(rich-cli)
+  linux_gate
+fi
+# ---
+
 # --- mnemo (personal AI memory CLI)
 # Install from the latest GitHub release tarball, not a plain clone+build:
 # release.yml's publish-cli job stamps the real Auth0 domain/audience/client
