@@ -346,7 +346,7 @@ fi
 if [[ "$OS" == "Darwin" ]]; then
   # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
   echo "======= Installing Homebrew packages"
-  BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier exiftool mediainfo ghostscript ouch duckdb rich-cli)
+  BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier pngpaste exiftool mediainfo ghostscript ouch duckdb rich-cli)
   for pkg in "${BREW_PACKAGES[@]}"; do
     if brew list --formula "$pkg" &>/dev/null; then
       echo "  [skip] $pkg already installed"
@@ -639,6 +639,12 @@ if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
 fi
 
 cp tmux.conf $HOME/.tmux.conf
+
+# clip2ssh (prefix P): clipboard image -> ssh host, macOS only (needs pngpaste)
+if [[ "$OS" == "Darwin" ]]; then
+  mkdir -p "$HOME/.local/bin"
+  install -m 0755 clip2ssh "$HOME/.local/bin/clip2ssh"
+fi
 
 # tpm's install_plugins reads @plugin entries off a running tmux server, so
 # drive it from a throwaway detached session instead of a manual prefix + I.

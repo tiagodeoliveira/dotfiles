@@ -1,0 +1,31 @@
+#!/bin/sh
+# Upload the clipboard image to an ssh host and paste its remote path into a
+# tmux pane, so Claude Code running over ssh can attach it. macOS only (pngpaste).
+# Usage: clip2ssh <host> [tmux-pane-id]   (without a pane, prints the remote path)
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+host="$1"
+pane="$2"
+
+fail() {
+  if [ -n "$pane" ]; then tmux display-message "clip2ssh: $1"; else echo "clip2ssh: $1" >&2; fi
+  exit 1
+}
+
+[ -n "$host" ] || fail "no ssh host recorded for this pane (connect with the ssh wrapper)"
+command -v pngpaste >/dev/null 2>&1 || fail "pngpaste is not installed"
+tmp=$(mktemp -t clip2ssh.XXXXXX) || fail "mktemp failed"
+trap 'rm -f "$tmp"' EXIT
+pngpaste "$tmp" 2>/dev/null || fail "no image on the clipboard"
+
+name="clip-$(date +%Y%m%d-%H%M%S).png"
+path=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$host" \
+  "d=\$HOME/.cache/clip; mkdir -p \"\$d\" && cat > \"\$d/$name\" && printf %s \"\$d/$name\"" < "$tmp") \
+  || fail "upload to $host failed"
+[ -n "$path" ] || fail "upload to $host returned no path"
+
+if [ -n "$pane" ]; then
+  # bracketed paste, so Claude Code treats it like a dropped file path
+  printf '%s ' "$path" | tmux load-buffer -b clip2ssh - && tmux paste-buffer -p -d -b clip2ssh -t "$pane"
+else
+  printf '%s\n' "$path"
+fi

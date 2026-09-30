@@ -63,7 +63,9 @@ ssh() {
     local host="${@: -1}"
     host="${host#*@}"
     tmux select-pane -T "$host"
+    tmux set-option -p @ssh_host "$host"
     command ssh "$@"
+    tmux set-option -pu @ssh_host
     tmux select-pane -T ""
   else
     command ssh "$@"
