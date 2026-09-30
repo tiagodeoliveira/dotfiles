@@ -50,6 +50,12 @@ Each image contains only what a fresh box has (plus `curl`, `git`, and `sudo` wh
 
 Out of scope: interactive verification of tmux, yazi or nvim (needs a pty/expect harness), arm64 vs x86_64 matrix (fallbacks are arch-aware but only the host arch is tested), Amazon Linux 2.
 
+## CI
+
+`.github/workflows/setup-linux.yml` runs `test/docker-test.sh` for `ubuntu` and `amazonlinux` on `ubuntu-latest`. GitHub-hosted runners are x86_64, so CI exercises the x86_64 release assets, including resvg, that local Apple-silicon runs skip. It triggers on pushes to `main`, pull requests and manual dispatch, restricted to the files that affect the install (`setup.sh`, `tmux.conf`, `zshrc`, `init.lua`, `coc-settings.json`, `yazi/`, `test/` and the workflow itself).
+
+`GITHUB_TOKEN` is forwarded into the container to avoid GitHub API rate limits. macOS is not covered in CI: `setup.sh` mutates the machine and needs Homebrew.
+
 ## Risks
 
 - Network flakiness in the container run (mise, nvim PlugInstall, tpm all fetch from GitHub).

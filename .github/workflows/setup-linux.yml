@@ -1,0 +1,46 @@
+name: setup-linux
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - setup.sh
+      - tmux.conf
+      - zshrc
+      - init.lua
+      - coc-settings.json
+      - yazi/**
+      - test/**
+      - .github/workflows/setup-linux.yml
+  pull_request:
+    paths:
+      - setup.sh
+      - tmux.conf
+      - zshrc
+      - init.lua
+      - coc-settings.json
+      - yazi/**
+      - test/**
+      - .github/workflows/setup-linux.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: setup.sh on ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu, amazonlinux]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run setup.sh twice and verify tools
+        env:
+          # forwarded into the container; lifts the unauthenticated GitHub API rate limit
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: test/docker-test.sh ${{ matrix.distro }}
