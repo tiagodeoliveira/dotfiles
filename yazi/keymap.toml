@@ -57,6 +57,12 @@ on = "<S-Down>"
 run = "plugin zoom -- down"
 desc = "Pan zoomed image down"
 
+# toggle-pane.yazi -- maximize/restore the preview pane (respects mgr.ratio)
+[[mgr.prepend_keymap]]
+on = "T"
+run = "plugin toggle-pane max-preview"
+desc = "Maximize or restore the preview pane"
+
 # center-media.yazi
 [[mgr.prepend_keymap]]
 on = "<F3>"

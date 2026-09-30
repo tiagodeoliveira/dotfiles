@@ -78,5 +78,10 @@ use = "KKV9/command"
 rev = "523e6a5"
 hash = "a7e5577f7bae80fa064e416c09ac62a4"
 
+[[plugin.deps]]
+use = "yazi-rs/plugins:toggle-pane"
+rev = "33dde28"
+hash = "5b2fbef7d1513ce38ff72623a071a5e"
+
 [flavor]
 deps = []
