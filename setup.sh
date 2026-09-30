@@ -772,10 +772,9 @@ EOF
 EOF
   fi
   if [[ -n "${RESVG_SKIPPED:-}" ]]; then
-    cat <<'EOF'
-  7. mise use -g rust && cargo install resvg --locked
-                          # the prebuilt resvg needs a newer glibc than this host has (yazi SVG previews)
-EOF
+    n=6; [[ -n "${RTK_SKIPPED:-}" ]] && n=7
+    echo "  $n. mise use -g rust && cargo install resvg --locked"
+    echo "                          # the prebuilt resvg needs a newer glibc than this host has (yazi SVG previews)"
   fi
 fi
 echo
