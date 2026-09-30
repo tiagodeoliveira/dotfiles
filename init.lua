@@ -261,7 +261,7 @@ require('dap-python').setup(python3 ~= '' and python3 or 'python3')
 
 -- C / C++ via lldb-dap (ships with Xcode). Resolve through xcrun so there is no
 -- hardcoded Xcode path. Reuses the same DAP keymaps and UI as the Python setup.
-local lldb_dap = vim.trim(vim.fn.system({ 'xcrun', '-f', 'lldb-dap' }))
+local lldb_dap = vim.fn.executable('xcrun') == 1 and vim.trim(vim.fn.system({ 'xcrun', '-f', 'lldb-dap' })) or ''
 if vim.v.shell_error == 0 and lldb_dap ~= '' then
   dap.adapters.lldb = { type = 'executable', command = lldb_dap, name = 'lldb' }
   dap.configurations.c = {
