@@ -7,7 +7,9 @@ export CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1
 HISTSIZE=999999999
 SAVEHIST=999999999
 
-ZSH_TMUX_AUTOSTART=true
+# Over ssh the local tmux already wraps this shell, so don't nest another one;
+# run `tmux new -As main` by hand when the remote session must outlive the connection.
+[[ -z "$SSH_CONNECTION" ]] && ZSH_TMUX_AUTOSTART=true
 ZSH_TMUX_AUTOREFRESH=true
 
 ZSH_THEME="agnoster"
