@@ -94,7 +94,7 @@ if [[ "$OS" == "Linux" ]]; then
     $SUDO apt-get update
     LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux bat zoxide neovim fzf ripgrep jq imagemagick ghostscript mediainfo libimage-exiftool-perl sshfs)
   else
-    LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux zoxide neovim fzf ripgrep jq ImageMagick ghostscript mediainfo perl-Image-ExifTool fuse-sshfs)
+    LINUX_PACKAGES=(tar gzip findutils unzip patch file perl zsh bash tmux zoxide neovim fzf ripgrep jq ImageMagick ghostscript mediainfo perl-Image-ExifTool fuse-sshfs)
   fi
   for pkg in "${LINUX_PACKAGES[@]}"; do
     if pkg_installed "$pkg"; then
@@ -115,11 +115,165 @@ if [[ "$OS" == "Linux" ]]; then
     chmod +x "$HOME/.local/bin/magick"
   fi
 
-  # @@FALLBACKS@@ (Task 4 replaces this line)
+  github_asset_url() {
+    local repo="$1" regex="$2" auth=()
+    [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+    curl -fsSL "${auth[@]}" "https://api.github.com/repos/$repo/releases/latest" \
+      | grep -o '"browser_download_url": *"[^"]*"' | cut -d'"' -f4 \
+      | grep -E "/${regex}\$" | head -1
+  }
 
-  for cmd in zsh tmux bat zoxide nvim fzf rg jq magick gs mediainfo exiftool patch file unzip; do
+  install_release_bin() {
+    local repo="$1" regex="$2" url tmp bin found
+    shift 2
+    url="$(github_asset_url "$repo" "$regex")"
+    if [[ -z "$url" ]]; then
+      echo "  ERROR: no asset matching '$regex' in $repo's latest release"
+      return 1
+    fi
+    tmp="$(mktemp -d)"
+    if ! curl -fsSL "$url" -o "$tmp/asset"; then rm -rf "$tmp"; return 1; fi
+    mkdir "$tmp/x"
+    case "$url" in
+      *.zip) unzip -q "$tmp/asset" -d "$tmp/x" ;;
+      *.tar.gz|*.tgz) tar -xzf "$tmp/asset" -C "$tmp/x" ;;
+      *) echo "  ERROR: unsupported archive: $url"; rm -rf "$tmp"; return 1 ;;
+    esac
+    for bin in "$@"; do
+      found="$(find "$tmp/x" -type f -name "$bin" | head -1)"
+      if [[ -z "$found" ]]; then
+        echo "  ERROR: $bin not found inside $url"
+        rm -rf "$tmp"
+        return 1
+      fi
+      install -m 0755 "$found" "$HOME/.local/bin/$bin"
+    done
+    rm -rf "$tmp"
+  }
+
+  ensure_release_bin() {
+    local cmd="$1"
+    shift
+    if command -v "$cmd" &>/dev/null; then
+      echo "  [skip] $cmd already installed"
+      return 0
+    fi
+    echo "  [install] $cmd (release binary)"
+    install_release_bin "$@" || LINUX_FAILED+=("$cmd")
+  }
+
+  echo "======= Installing Linux fallback tools"
+  if ! command -v mise &>/dev/null; then
+    echo "  [install] mise (official installer)"
+    curl -fsSL https://mise.run | sh || LINUX_FAILED+=(mise)
+  fi
+  ensure_release_bin yazi   sxyazi/yazi           "yazi-${ARCH_GNU}-unknown-linux-musl\.zip" yazi ya
+  ensure_release_bin ouch   ouch-org/ouch         "ouch-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" ouch
+  ensure_release_bin just   casey/just            "just-[0-9.]+-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" just
+  ensure_release_bin kubectx ahmetb/kubectx       "kubectx_v[0-9.]+_linux_${ARCH_GNU/aarch64/arm64}\.tar\.gz" kubectx
+  ensure_release_bin rtk    rtk-ai/rtk            "rtk-${ARCH_GNU}-unknown-linux-(musl|gnu)\.tar\.gz" rtk
+  if [[ "$ARCH_GNU" == x86_64 ]]; then
+    ensure_release_bin resvg RazrFalcon/resvg     "resvg-linux-x86_64\.tar\.gz" resvg
+  else
+    echo "  [skip] resvg publishes no linux $ARCH_GNU build"
+  fi
+
+  if ! command -v duckdb &>/dev/null; then
+    echo "  [install] duckdb (release binary)"
+    if curl -fsSL "https://github.com/duckdb/duckdb/releases/latest/download/duckdb_cli-linux-${ARCH_ALT}.gz" \
+        | gunzip > "$HOME/.local/bin/duckdb" && chmod +x "$HOME/.local/bin/duckdb"; then
+      :
+    else
+      rm -f "$HOME/.local/bin/duckdb"
+      LINUX_FAILED+=(duckdb)
+    fi
+  fi
+
+  if ! command -v kustomize &>/dev/null; then
+    echo "  [install] kustomize (official installer)"
+    (cd "$HOME/.local/bin" && curl -fsSL https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash) \
+      || LINUX_FAILED+=(kustomize)
+  fi
+
+  # hunk ships a binary plus a skills/ directory the claude-code-skills section links to
+  if ! command -v hunk &>/dev/null; then
+    echo "  [install] hunk (release tarball)"
+    HUNK_URL="$(github_asset_url modem-dev/hunk "hunkdiff-linux-${ARCH_ALT/amd64/x64}\.tar\.gz")"
+    HUNK_TMP="$(mktemp -d)"
+    if [[ -n "$HUNK_URL" ]] && curl -fsSL "$HUNK_URL" | tar -xz -C "$HUNK_TMP" \
+        && HUNK_BIN="$(find "$HUNK_TMP" -type f -name hunk | head -1)" && [[ -n "$HUNK_BIN" ]]; then
+      rm -rf "$HOME/.local/share/hunk"
+      mkdir -p "$HOME/.local/share/hunk"
+      cp -R "$(dirname "$HUNK_BIN")/." "$HOME/.local/share/hunk/"
+      chmod +x "$HOME/.local/share/hunk/hunk"
+      ln -sf "$HOME/.local/share/hunk/hunk" "$HOME/.local/bin/hunk"
+    else
+      LINUX_FAILED+=(hunk)
+    fi
+    rm -rf "$HUNK_TMP"
+  fi
+
+  # Not packaged on Amazon Linux 2023 (no-ops where apt/dnf already provided them).
+  ensure_release_bin bat    sharkdp/bat           "bat-v[0-9.]+-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" bat
+  ensure_release_bin zoxide ajeetdsouza/zoxide    "zoxide-[0-9.]+-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" zoxide
+  ensure_release_bin rg     BurntSushi/ripgrep    "ripgrep-[0-9.]+-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" rg
+  ensure_release_bin fzf    junegunn/fzf          "fzf-[0-9.]+-linux_${ARCH_ALT}\.tar\.gz" fzf
+
+  # neovim needs its runtime tree next to the binary
+  if ! command -v nvim &>/dev/null; then
+    echo "  [install] nvim (release tarball)"
+    NVIM_URL="$(github_asset_url neovim/neovim "nvim-linux-${ARCH_GNU/aarch64/arm64}\.tar\.gz")"
+    NVIM_TMP="$(mktemp -d)"
+    if [[ -n "$NVIM_URL" ]] && curl -fsSL "$NVIM_URL" | tar -xz -C "$NVIM_TMP" \
+        && NVIM_BIN="$(find "$NVIM_TMP" -type f -path '*/bin/nvim' | head -1)" && [[ -n "$NVIM_BIN" ]]; then
+      rm -rf "$HOME/.local/share/nvim-dist"
+      mkdir -p "$HOME/.local/share/nvim-dist"
+      cp -R "$(dirname "$(dirname "$NVIM_BIN")")/." "$HOME/.local/share/nvim-dist/"
+      ln -sf "$HOME/.local/share/nvim-dist/bin/nvim" "$HOME/.local/bin/nvim"
+    else
+      LINUX_FAILED+=(nvim)
+    fi
+    rm -rf "$NVIM_TMP"
+  fi
+
+  # Perl program with a lib/ tree; run in place through a symlink
+  if ! command -v exiftool &>/dev/null; then
+    echo "  [install] exiftool (Image-ExifTool from GitHub)"
+    EXIF_TMP="$(mktemp -d)"
+    EXIF_TAG="$(curl -fsSL ${GITHUB_TOKEN:+-H "Authorization: Bearer $GITHUB_TOKEN"} https://api.github.com/repos/exiftool/exiftool/tags \
+      | grep -o '"name": *"[0-9][0-9.]*"' | cut -d'"' -f4 | sort -V | tail -1)"
+    if [[ -n "$EXIF_TAG" ]] && curl -fsSL "https://github.com/exiftool/exiftool/archive/refs/tags/$EXIF_TAG.tar.gz" | tar -xz -C "$EXIF_TMP" \
+        && EXIF_BIN="$(find "$EXIF_TMP" -maxdepth 2 -type f -name exiftool | head -1)" && [[ -n "$EXIF_BIN" ]]; then
+      rm -rf "$HOME/.local/share/exiftool"
+      mkdir -p "$HOME/.local/share/exiftool"
+      cp -R "$(dirname "$EXIF_BIN")/." "$HOME/.local/share/exiftool/"
+      chmod +x "$HOME/.local/share/exiftool/exiftool"
+      ln -sf "$HOME/.local/share/exiftool/exiftool" "$HOME/.local/bin/exiftool"
+    else
+      LINUX_FAILED+=(exiftool)
+    fi
+    rm -rf "$EXIF_TMP"
+  fi
+
+  # MediaArea's Lambda build is a static-enough CLI built for Amazon Linux 2023
+  if ! command -v mediainfo &>/dev/null; then
+    echo "  [install] mediainfo (MediaArea Lambda build)"
+    MI_PATH="$(curl -fsSL https://mediaarea.net/en/MediaInfo/Download/Lambda \
+      | grep -o "download/binary/mediainfo/[^\"]*Lambda_${ARCH_GNU/aarch64/arm64}\.zip" | head -1)"
+    MI_TMP="$(mktemp -d)"
+    if [[ -n "$MI_PATH" ]] && curl -fsSL "https://mediaarea.net/$MI_PATH" -o "$MI_TMP/mi.zip" \
+        && unzip -q "$MI_TMP/mi.zip" -d "$MI_TMP/x" && [[ -f "$MI_TMP/x/bin/mediainfo" ]]; then
+      install -m 0755 "$MI_TMP/x/bin/mediainfo" "$HOME/.local/bin/mediainfo"
+    else
+      LINUX_FAILED+=(mediainfo)
+    fi
+    rm -rf "$MI_TMP"
+  fi
+
+  for cmd in zsh tmux bat zoxide nvim fzf rg jq magick gs mediainfo exiftool patch file unzip mise yazi ya ouch duckdb just kustomize kubectx rtk hunk; do
     command -v "$cmd" &>/dev/null || LINUX_FAILED+=("$cmd")
   done
+  [[ "$ARCH_GNU" == x86_64 ]] && { command -v resvg &>/dev/null || LINUX_FAILED+=(resvg); }
   linux_gate
 fi
 # ---
@@ -176,8 +330,9 @@ fi
 # ---
 
 # --- claude code skills
-# Wire up brew-installed tool skills under ~/.claude/skills/. Symlink against
-# /opt/homebrew/opt/<formula>/... (version-stable; survives brew upgrade).
+# Wire up installed tool skills under ~/.claude/skills/. On macOS, symlink against
+# /opt/homebrew/opt/<formula>/... (version-stable; survives brew upgrade); on Linux,
+# against the release tree under ~/.local/share.
 echo "======= Configuring Claude Code skills"
 if [[ "$OS" == "Darwin" ]]; then
   HUNK_SKILL_TARGET="/opt/homebrew/opt/hunk/libexec/skills/hunk-review/SKILL.md"
