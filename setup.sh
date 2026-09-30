@@ -242,6 +242,7 @@ if [[ "$OS" == "Linux" ]]; then
     EXIF_TMP="$(mktemp -d)"
     EXIF_TAG="$(curl -fsSL ${GITHUB_TOKEN:+-H "Authorization: Bearer $GITHUB_TOKEN"} https://api.github.com/repos/exiftool/exiftool/tags \
       | grep -o '"name": *"[0-9][0-9.]*"' | cut -d'"' -f4 | sort -V | tail -1)"
+    [[ -z "$EXIF_TAG" ]] && echo "  ERROR: could not determine latest exiftool tag from the GitHub API"
     if [[ -n "$EXIF_TAG" ]] && curl -fsSL "https://github.com/exiftool/exiftool/archive/refs/tags/$EXIF_TAG.tar.gz" | tar -xz -C "$EXIF_TMP" \
         && EXIF_BIN="$(find "$EXIF_TMP" -maxdepth 2 -type f -name exiftool | head -1)" && [[ -n "$EXIF_BIN" ]]; then
       rm -rf "$HOME/.local/share/exiftool"
@@ -249,6 +250,7 @@ if [[ "$OS" == "Linux" ]]; then
       cp -R "$(dirname "$EXIF_BIN")/." "$HOME/.local/share/exiftool/"
       chmod +x "$HOME/.local/share/exiftool/exiftool"
       ln -sf "$HOME/.local/share/exiftool/exiftool" "$HOME/.local/bin/exiftool"
+      "$HOME/.local/bin/exiftool" -ver >/dev/null 2>&1 || { echo "  ERROR: exiftool installed but does not run"; LINUX_FAILED+=(exiftool); }
     else
       LINUX_FAILED+=(exiftool)
     fi
@@ -260,6 +262,7 @@ if [[ "$OS" == "Linux" ]]; then
     echo "  [install] mediainfo (MediaArea Lambda build)"
     MI_PATH="$(curl -fsSL https://mediaarea.net/en/MediaInfo/Download/Lambda \
       | grep -o "download/binary/mediainfo/[^\"]*Lambda_${ARCH_GNU/aarch64/arm64}\.zip" | head -1)"
+    [[ -z "$MI_PATH" ]] && echo "  ERROR: no Lambda_${ARCH_GNU/aarch64/arm64}.zip link on mediaarea.net Lambda download page"
     MI_TMP="$(mktemp -d)"
     if [[ -n "$MI_PATH" ]] && curl -fsSL "https://mediaarea.net/$MI_PATH" -o "$MI_TMP/mi.zip" \
         && unzip -q "$MI_TMP/mi.zip" -d "$MI_TMP/x" && [[ -f "$MI_TMP/x/bin/mediainfo" ]]; then
