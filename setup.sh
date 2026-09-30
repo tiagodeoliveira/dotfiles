@@ -43,6 +43,87 @@ if [[ "$OS" == "Darwin" ]]; then
 fi
 # ---
 
+# --- linux packages (apt / dnf)
+# Native packages first; per-tool fallbacks (next block) cover whatever the
+# distro repos lack. A package missing from the repos is not fatal here: the
+# final check below fails loudly only if the tool is still absent.
+if [[ "$OS" == "Linux" ]]; then
+  echo "======= Installing Linux packages"
+  export DEBIAN_FRONTEND=noninteractive
+  export PATH="$HOME/.local/bin:$PATH"
+  mkdir -p "$HOME/.local/bin"
+
+  if command -v apt-get &>/dev/null; then
+    PKG_MGR=apt
+  elif command -v dnf &>/dev/null; then
+    PKG_MGR=dnf
+  else
+    echo "ERROR: need apt-get or dnf"
+    exit 1
+  fi
+  SUDO=""
+  [[ $EUID -ne 0 ]] && SUDO="sudo"
+
+  case "$ARCH" in
+    x86_64) ARCH_GNU=x86_64; ARCH_ALT=amd64 ;;
+    aarch64|arm64) ARCH_GNU=aarch64; ARCH_ALT=arm64 ;;
+    *) echo "ERROR: unsupported CPU arch: $ARCH"; exit 1 ;;
+  esac
+
+  LINUX_FAILED=()
+  linux_gate() {
+    if (( ${#LINUX_FAILED[@]} > 0 )); then
+      echo "ERROR: could not install: ${LINUX_FAILED[*]}"
+      exit 1
+    fi
+  }
+  pkg_installed() {
+    case "$PKG_MGR" in
+      apt) dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q "install ok installed" ;;
+      dnf) rpm -q "$1" &>/dev/null ;;
+    esac
+  }
+  pkg_install() {
+    case "$PKG_MGR" in
+      apt) $SUDO apt-get install -y --no-install-recommends "$@" ;;
+      dnf) $SUDO dnf install -y "$@" ;;
+    esac
+  }
+
+  if [[ "$PKG_MGR" == apt ]]; then
+    $SUDO apt-get update
+    LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux bat zoxide neovim fzf ripgrep jq imagemagick ghostscript mediainfo libimage-exiftool-perl sshfs)
+  else
+    LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux zoxide neovim fzf ripgrep jq ImageMagick ghostscript mediainfo perl-Image-ExifTool fuse-sshfs)
+  fi
+  for pkg in "${LINUX_PACKAGES[@]}"; do
+    if pkg_installed "$pkg"; then
+      echo "  [skip] $pkg already installed"
+    else
+      echo "  [install] $pkg"
+      pkg_install "$pkg" || echo "  [missing] $pkg is not in the $PKG_MGR repos; a fallback may cover it"
+    fi
+  done
+
+  # Ubuntu ships bat as batcat and ImageMagick 6 (convert, no magick); zshrc and
+  # zoom.yazi call bat and magick. IM6 convert accepts the same arguments.
+  if ! command -v bat &>/dev/null && command -v batcat &>/dev/null; then
+    ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+  fi
+  if ! command -v magick &>/dev/null && command -v convert &>/dev/null; then
+    printf '#!/bin/sh\nexec convert "$@"\n' > "$HOME/.local/bin/magick"
+    chmod +x "$HOME/.local/bin/magick"
+  fi
+
+  # @@FALLBACKS@@ (Task 4 replaces this line)
+
+  for cmd in zsh tmux bat zoxide nvim fzf rg jq magick gs mediainfo exiftool patch file unzip; do
+    command -v "$cmd" &>/dev/null || LINUX_FAILED+=("$cmd")
+  done
+  linux_gate
+fi
+# ---
+
 # --- oh-my-zsh
 echo "======= Checking oh-my-zsh"
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
