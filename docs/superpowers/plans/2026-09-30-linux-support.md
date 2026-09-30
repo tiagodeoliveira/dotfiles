@@ -692,3 +692,74 @@ Edit the spec so it matches reality: `rtk` and `hunk` install from release tarba
 - [ ] **Step 6: Checkpoint**
 
 `git status` and `git diff --stat`. Commit message when asked: `docs: sync linux support spec with implementation`
+
+---
+
+### Task 8: GitHub Actions workflow for the Docker test
+
+**Files:**
+- Create: `.github/workflows/setup-linux.yml`
+- Modify: `docs/superpowers/specs/2026-09-30-linux-support-design.md` (add a CI section)
+
+**Interfaces:**
+- Consumes: `test/docker-test.sh <ubuntu|amazonlinux>` (Task 1), env `GITHUB_TOKEN` forwarded into the container (Task 1).
+
+- [ ] **Step 1: Write the workflow**
+
+`.github/workflows/setup-linux.yml`:
+
+```yaml
+name: setup-linux
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - setup.sh
+      - tmux.conf
+      - zshrc
+      - init.lua
+      - coc-settings.json
+      - yazi/**
+      - test/**
+      - .github/workflows/setup-linux.yml
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: setup.sh on ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu, amazonlinux]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run setup.sh twice and verify tools
+        env:
+          # forwarded into the container; lifts the unauthenticated GitHub API rate limit
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: test/docker-test.sh ${{ matrix.distro }}
+```
+
+GitHub-hosted runners are x86_64, so this run exercises the x86_64 release assets (including resvg) that a local Apple-silicon run does not. If the YAML anchor (`&paths` / `*paths`) is rejected by GitHub's parser, repeat the path list under `pull_request` instead.
+
+- [ ] **Step 2: Validate the file locally**
+
+Run: `ruby -ryaml -e 'y = YAML.load_file(".github/workflows/setup-linux.yml", aliases: true); abort("bad") unless y["jobs"]["linux"]["strategy"]["matrix"]["distro"] == %w[ubuntu amazonlinux]; puts "yaml ok"'`
+Expected: `yaml ok`. If `actionlint` is installed, also run `actionlint .github/workflows/setup-linux.yml` and expect no output.
+
+- [ ] **Step 3: Document it in the spec**
+
+Add a "CI" section to the spec: the workflow runs `test/docker-test.sh` for `ubuntu` and `amazonlinux` on `ubuntu-latest` (x86_64), on pushes to `main`, pull requests and manual dispatch, restricted to the files that affect the install; macOS is not covered in CI (`setup.sh` mutates the machine and needs Homebrew).
+
+- [ ] **Step 4: Checkpoint**
+
+The first real run happens only after the branch is pushed; note that in the report. Commit message when asked: `ci: run the linux docker test on github actions`
