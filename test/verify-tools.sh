@@ -33,6 +33,9 @@ fi
 rm -rf "$tmp"
 
 # tmux config parses; macOS-only bindings absent elsewhere
+if command -v tmux &>/dev/null; then
+  [[ -f "$HOME/.tmux.conf" ]] || fail "tmux.conf not installed"
+fi
 if command -v tmux &>/dev/null && [[ -f "$HOME/.tmux.conf" ]]; then
   tmux -L verify-tools new-session -d -s verify 2>/dev/null
   tmux -L verify-tools source-file "$HOME/.tmux.conf" || fail "tmux.conf does not parse"
