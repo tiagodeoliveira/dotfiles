@@ -543,6 +543,8 @@ nvim +silent +PlugUpgrade +PlugUpdate +PlugInstall +PlugClean +qall
 echo "======= Configuring yazi"
 mkdir -p "$HOME/.config/yazi"
 cp yazi/init.lua yazi/yazi.toml yazi/keymap.toml yazi/package.toml "$HOME/.config/yazi/"
+# our duckdb patch below makes ya pkg install abort on re-runs; drop it so it re-fetches clean
+[[ -d "$HOME/.config/yazi/plugins/duckdb.yazi" ]] && { chmod -R u+w "$HOME/.config/yazi/plugins/duckdb.yazi"; rm -rf "$HOME/.config/yazi/plugins/duckdb.yazi"; }
 (cd "$HOME/.config/yazi" && ya pkg install)
 
 # zoom.yazi is modified heavily enough (crop-based zoom, panning, higher zoom
