@@ -91,9 +91,9 @@ if [[ "$OS" == "Linux" ]]; then
 
   if [[ "$PKG_MGR" == apt ]]; then
     $SUDO env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=120 update
-    LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux bat zoxide neovim fzf ripgrep jq imagemagick ghostscript mediainfo libimage-exiftool-perl sshfs)
+    LINUX_PACKAGES=(tar gzip findutils unzip patch file zsh bash tmux bat zoxide neovim fzf ripgrep jq imagemagick ghostscript mediainfo libimage-exiftool-perl sshfs chafa)
   else
-    LINUX_PACKAGES=(tar gzip findutils unzip patch file perl zsh bash tmux zoxide neovim fzf ripgrep jq ImageMagick ghostscript mediainfo perl-Image-ExifTool fuse-sshfs)
+    LINUX_PACKAGES=(tar gzip findutils unzip patch file perl zsh bash tmux zoxide neovim fzf ripgrep jq ImageMagick ghostscript mediainfo perl-Image-ExifTool fuse-sshfs chafa)
   fi
   for pkg in "${LINUX_PACKAGES[@]}"; do
     if pkg_installed "$pkg"; then
@@ -102,6 +102,7 @@ if [[ "$OS" == "Linux" ]]; then
       echo "  [install] $pkg"
       pkg_install "$pkg" || case "$pkg" in
         sshfs|fuse-sshfs) echo "  [missing] $pkg is not in the $PKG_MGR repos; sshfs is optional and is not installed" ;;
+        chafa) echo "  [missing] chafa is not in the $PKG_MGR repos; it is only yazi's text-block image fallback and is optional" ;;
         tar|gzip|findutils|unzip|patch|file|perl|zsh|bash|tmux|jq|ghostscript|imagemagick|ImageMagick) echo "  [missing] $pkg is not in the $PKG_MGR repos and has no fallback; the final check will fail" ;;
         *) echo "  [missing] $pkg is not in the $PKG_MGR repos; a fallback installs it" ;;
       esac
