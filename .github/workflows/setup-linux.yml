@@ -9,6 +9,10 @@ on:
       - zshrc
       - init.lua
       - coc-settings.json
+      - gitconfig
+      - gitignore_global
+      - CLAUDE.md
+      - ghostty_config
       - yazi/**
       - test/**
       - .github/workflows/setup-linux.yml
@@ -19,10 +23,17 @@ on:
       - zshrc
       - init.lua
       - coc-settings.json
+      - gitconfig
+      - gitignore_global
+      - CLAUDE.md
+      - ghostty_config
       - yazi/**
       - test/**
       - .github/workflows/setup-linux.yml
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
