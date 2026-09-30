@@ -219,8 +219,14 @@ if [[ "$OS" == "Linux" ]]; then
   ensure_release_bin rg     BurntSushi/ripgrep    "ripgrep-[0-9.]+-${ARCH_GNU}-unknown-linux-musl\.tar\.gz" rg
   ensure_release_bin fzf    junegunn/fzf          "fzf-[0-9.]+-linux_${ARCH_ALT}\.tar\.gz" fzf
 
-  # neovim needs its runtime tree next to the binary
-  if ! command -v nvim &>/dev/null; then
+  # neovim needs its runtime tree next to the binary; nvim-lspconfig needs >= 0.11
+  # (Ubuntu 24.04 apt ships 0.9), and ~/.local/bin precedes /usr/bin on PATH
+  NVIM_OLD=0
+  if command -v nvim &>/dev/null; then
+    NVIM_VER="$(nvim --version | head -1 | sed -E 's/^NVIM v?//')"
+    [[ "${NVIM_VER%%.*}" == 0 && "$(echo "$NVIM_VER" | cut -d. -f2)" -lt 11 ]] && NVIM_OLD=1
+  fi
+  if ! command -v nvim &>/dev/null || [[ $NVIM_OLD -eq 1 ]]; then
     echo "  [install] nvim (release tarball)"
     NVIM_URL="$(github_asset_url neovim/neovim "nvim-linux-${ARCH_GNU/aarch64/arm64}\.tar\.gz")"
     NVIM_TMP="$(mktemp -d)"

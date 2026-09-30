@@ -16,6 +16,12 @@ done
 # resvg publishes no aarch64 Linux build
 if [[ "$OS" == "Darwin" || "$ARCH" == "x86_64" ]]; then require resvg; fi
 
+# nvim-lspconfig needs Neovim >= 0.11
+if command -v nvim &>/dev/null; then
+  nv="$(nvim --version | head -1 | sed -E 's/^NVIM v?//')"
+  if [[ "${nv%%.*}" == 0 && "$(echo "$nv" | cut -d. -f2)" -lt 11 ]]; then fail "nvim too old (<0.11)"; fi
+fi
+
 # yazi config and plugins
 [[ -f "$HOME/.config/yazi/plugins/zoom.yazi/main.lua" ]] || fail "zoom.yazi not installed"
 grep -qF lambda_syntax "$HOME/.config/yazi/plugins/duckdb.yazi/main.lua" 2>/dev/null || fail "duckdb.yazi patch not applied"
