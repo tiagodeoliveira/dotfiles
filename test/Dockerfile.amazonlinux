@@ -1,0 +1,8 @@
+FROM amazonlinux:2023
+RUN dnf install -y sudo git tar gzip findutils shadow-utils \
+ && dnf clean all
+RUN useradd -m -s /bin/bash tester \
+ && echo 'tester ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/tester
+USER tester
+WORKDIR /home/tester/dotfiles
+COPY --chown=tester:tester . .
