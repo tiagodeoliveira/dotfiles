@@ -70,6 +70,20 @@ vim.o.writebackup = false
 vim.o.swapfile = false
 
 vim.opt.clipboard:append('unnamedplus')
+
+-- Over ssh there is no system clipboard: send yanks to the local terminal via OSC 52.
+-- Pasting stays on the terminal (Cmd+V), since reads would need a terminal prompt.
+if vim.env.SSH_TTY then
+  local osc52 = require('vim.ui.clipboard.osc52')
+  local function paste()
+    return { vim.fn.split(vim.fn.getreg(''), '\n'), vim.fn.getregtype('') }
+  end
+  vim.g.clipboard = {
+    name = 'OSC 52',
+    copy = { ['+'] = osc52.copy('+'), ['*'] = osc52.copy('*') },
+    paste = { ['+'] = paste, ['*'] = paste },
+  }
+end
 vim.opt.termguicolors = true
 vim.opt.signcolumn = "yes"
 
