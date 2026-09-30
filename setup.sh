@@ -1,34 +1,45 @@
 #!/bin/bash
 
+OS="$(uname -s)"   # Darwin | Linux
+ARCH="$(uname -m)" # x86_64 | arm64 (macOS) | aarch64 (Linux)
+if [[ "$OS" != "Darwin" && "$OS" != "Linux" ]]; then
+  echo "ERROR: unsupported OS: $OS"
+  exit 1
+fi
+
 # --- xcode command line tools
-echo "======= Checking Xcode Command Line Tools"
-if ! xcode-select -p &>/dev/null; then
-  echo "Triggering Xcode CLT installer..."
-  xcode-select --install
-  echo "Complete the install in the popup, then press Enter to continue..."
-  read -r
-else
-  echo "Xcode CLT already installed"
+if [[ "$OS" == "Darwin" ]]; then
+  echo "======= Checking Xcode Command Line Tools"
+  if ! xcode-select -p &>/dev/null; then
+    echo "Triggering Xcode CLT installer..."
+    xcode-select --install
+    echo "Complete the install in the popup, then press Enter to continue..."
+    read -r
+  else
+    echo "Xcode CLT already installed"
+  fi
 fi
 # ---
 
 # --- homebrew
-# NONINTERACTIVE=1 covers both the installer below and every `brew` call
-# later in this script (formula installs, taps, etc.) - equivalent to apt -y.
-export NONINTERACTIVE=1
-echo "======= Checking Homebrew"
-if ! command -v brew &>/dev/null; then
-  echo "Installing Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-else
-  echo "Homebrew already installed"
-fi
-# load brew into current shell session so brew commands below work
-# (shellenv only auto-runs in login shells; this script is non-login)
-if [[ -x /opt/homebrew/bin/brew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -x /usr/local/bin/brew ]]; then
-  eval "$(/usr/local/bin/brew shellenv)"
+if [[ "$OS" == "Darwin" ]]; then
+  # NONINTERACTIVE=1 covers both the installer below and every `brew` call
+  # later in this script (formula installs, taps, etc.) - equivalent to apt -y.
+  export NONINTERACTIVE=1
+  echo "======= Checking Homebrew"
+  if ! command -v brew &>/dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  else
+    echo "Homebrew already installed"
+  fi
+  # load brew into current shell session so brew commands below work
+  # (shellenv only auto-runs in login shells; this script is non-login)
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
 fi
 # ---
 
@@ -45,17 +56,19 @@ fi
 # ---
 
 # --- brew packages
-# canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
-echo "======= Installing Homebrew packages"
-BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier exiftool mediainfo ghostscript ouch duckdb rich-cli)
-for pkg in "${BREW_PACKAGES[@]}"; do
-  if brew list --formula "$pkg" &>/dev/null; then
-    echo "  [skip] $pkg already installed"
-  else
-    echo "  [install] $pkg"
-    brew install "$pkg"
-  fi
-done
+if [[ "$OS" == "Darwin" ]]; then
+  # canonical formula names (nvim is an alias for neovim; brew list only matches canonical)
+  echo "======= Installing Homebrew packages"
+  BREW_PACKAGES=(bash tmux bat zoxide neovim mise fzf rtk modem-dev/tap/hunk ripgrep jq pnpm kustomize kubectx just imagemagick yazi resvg terminal-notifier exiftool mediainfo ghostscript ouch duckdb rich-cli)
+  for pkg in "${BREW_PACKAGES[@]}"; do
+    if brew list --formula "$pkg" &>/dev/null; then
+      echo "  [skip] $pkg already installed"
+    else
+      echo "  [install] $pkg"
+      brew install "$pkg"
+    fi
+  done
+fi
 # ---
 
 # --- uv (Python package/project manager)
@@ -85,7 +98,11 @@ fi
 # Wire up brew-installed tool skills under ~/.claude/skills/. Symlink against
 # /opt/homebrew/opt/<formula>/... (version-stable; survives brew upgrade).
 echo "======= Configuring Claude Code skills"
-HUNK_SKILL_TARGET="/opt/homebrew/opt/hunk/libexec/skills/hunk-review/SKILL.md"
+if [[ "$OS" == "Darwin" ]]; then
+  HUNK_SKILL_TARGET="/opt/homebrew/opt/hunk/libexec/skills/hunk-review/SKILL.md"
+else
+  HUNK_SKILL_TARGET="$HOME/.local/share/hunk/skills/hunk-review/SKILL.md"
+fi
 HUNK_SKILL_LINK="$HOME/.claude/skills/hunk-review/SKILL.md"
 if [[ -f "$HUNK_SKILL_TARGET" ]]; then
   mkdir -p "$(dirname "$HUNK_SKILL_LINK")"
@@ -158,8 +175,8 @@ fi
 BASH_VERSION_INSTALLED=$(bash --version | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 BASH_MAJOR=${BASH_VERSION_INSTALLED%%.*}
 BASH_MINOR=$(echo "$BASH_VERSION_INSTALLED" | cut -d. -f2)
-if (( BASH_MAJOR < 5 )) || (( BASH_MAJOR == 5 && BASH_MINOR < 3 )); then
-  echo "ERROR: bash >= 5.3 required, found $BASH_VERSION_INSTALLED"
+if (( BASH_MAJOR < 5 )) || (( BASH_MAJOR == 5 && BASH_MINOR < 2 )); then
+  echo "ERROR: bash >= 5.2 required, found $BASH_VERSION_INSTALLED"
   exit 1
 fi
 
@@ -195,7 +212,7 @@ else
     echo "ERROR: no mnemo-cli release tarball found on GitHub; cut a release (tag v*) first"
     exit 1
   fi
-  MNEMO_TGZ="$(mktemp -t mnemo-cli).tgz"
+  MNEMO_TGZ="$(mktemp -t mnemo-cli.XXXXXX).tgz"
   curl -fsSL "$MNEMO_TARBALL_URL" -o "$MNEMO_TGZ"
   mise exec node@22 -- npm install -g "$MNEMO_TGZ"
   rm -f "$MNEMO_TGZ"
@@ -217,7 +234,7 @@ else
     echo "ERROR: no auris-cli release tarball found on GitHub; cut a release (tag v*) first"
     exit 1
   fi
-  AURIS_TGZ="$(mktemp -t auris-cli).tgz"
+  AURIS_TGZ="$(mktemp -t auris-cli.XXXXXX).tgz"
   curl -fsSL "$AURIS_TARBALL_URL" -o "$AURIS_TGZ"
   mise exec node@22 -- npm install -g "$AURIS_TGZ"
   rm -f "$AURIS_TGZ"
@@ -295,12 +312,14 @@ DUCKDB_MAIN="$HOME/.config/yazi/plugins/duckdb.yazi/main.lua"
 if [[ -f "$DUCKDB_MAIN" ]] && ! grep -qF "lambda_syntax" "$DUCKDB_MAIN"; then
   patch -p1 "$DUCKDB_MAIN" < yazi/duckdb.yazi.patch
 fi
-# sshfs.yazi needs macFUSE, a kernel/system extension -- can't be installed
-# non-interactively (needs a sudo password prompt and System Settings
-# approval). See the manual follow-ups at the end of this script.
-if ! brew list --cask macfuse &>/dev/null; then
-  echo "macFUSE not installed -- sshfs.yazi won't work until you run:"
-  echo "  brew install --cask macfuse"
+if [[ "$OS" == "Darwin" ]]; then
+  # sshfs.yazi needs macFUSE, a kernel/system extension -- can't be installed
+  # non-interactively (needs a sudo password prompt and System Settings
+  # approval). See the manual follow-ups at the end of this script.
+  if ! brew list --cask macfuse &>/dev/null; then
+    echo "macFUSE not installed -- sshfs.yazi won't work until you run:"
+    echo "  brew install --cask macfuse"
+  fi
 fi
 # ---
 
@@ -322,16 +341,18 @@ tmux source-file "$HOME/.tmux.conf"
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
 tmux kill-session -t __dotfiles_setup
 
-# tmux2k's cpu-temp.sh greps ioreg output case-insensitively for "Temperature",
-# which also matches AverageTemperature/MinimumTemperature/MaximumTemperature
-# substrings inside ioreg's BatteryData blob, plus a separate VirtualTemperature
-# key -- producing garbage on top of the real reading. Tighten it to match only
-# the exact "Temperature" key. tpm's install_plugins only clones what's missing
-# (no re-pull of existing plugins), so this survives a normal setup.sh re-run.
-CPU_TEMP_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/cpu-temp.sh"
-if [[ -f "$CPU_TEMP_SCRIPT" ]] && ! grep -qF '"Temperature" =' "$CPU_TEMP_SCRIPT"; then
-  sed -i '' "s/grep -i \"Temperature\"/grep -F '\"Temperature\" ='/" "$CPU_TEMP_SCRIPT"
-  echo "Patched cpu-temp.sh ioreg grep"
+if [[ "$OS" == "Darwin" ]]; then
+  # tmux2k's cpu-temp.sh greps ioreg output case-insensitively for "Temperature",
+  # which also matches AverageTemperature/MinimumTemperature/MaximumTemperature
+  # substrings inside ioreg's BatteryData blob, plus a separate VirtualTemperature
+  # key -- producing garbage on top of the real reading. Tighten it to match only
+  # the exact "Temperature" key. tpm's install_plugins only clones what's missing
+  # (no re-pull of existing plugins), so this survives a normal setup.sh re-run.
+  CPU_TEMP_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/cpu-temp.sh"
+  if [[ -f "$CPU_TEMP_SCRIPT" ]] && ! grep -qF '"Temperature" =' "$CPU_TEMP_SCRIPT"; then
+    sed -i '' "s/grep -i \"Temperature\"/grep -F '\"Temperature\" ='/" "$CPU_TEMP_SCRIPT"
+    echo "Patched cpu-temp.sh ioreg grep"
+  fi
 fi
 
 # tmux2k has no disk-usage widget. Its "custom" plugin ships as a bare
@@ -412,19 +433,24 @@ cp gitignore_global $HOME/.gitignore_global
 
 # --- manual follow-ups
 # Surface the work the script cannot do for the user (interactive auth, etc.)
-cat <<'EOF'
+if [[ "$OS" == "Darwin" ]]; then COPY_KEY="pbcopy < ~/.ssh/id_ed25519.pub"; else COPY_KEY="cat ~/.ssh/id_ed25519.pub"; fi
+cat <<EOF
 
 ======= Setup done. Manual steps left:
 
   1. mnemo login          # Auth0 device flow for the memory CLI
   2. auris login          # Auth0 device flow for the meeting CLI
   3. claude               # then /login to authenticate Claude Code
-  4. Add SSH key to GitHub: pbcopy < ~/.ssh/id_ed25519.pub
+  4. Add SSH key to GitHub: $COPY_KEY
                           # then paste at https://github.com/settings/keys
+EOF
+if [[ "$OS" == "Darwin" ]]; then
+  cat <<'EOF'
   5. brew install --cask macfuse   # then approve it in System Settings ->
                           # Privacy & Security (and likely restart) before
                           # sshfs.yazi (yazi plugin) will work
                           # brew install --cask sshfs-mac   # after macfuse
-
 EOF
+fi
+echo
 # ---
