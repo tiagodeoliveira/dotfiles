@@ -10,6 +10,9 @@ SAVEHIST=999999999
 # Over ssh the local tmux already wraps this shell, so don't nest another one;
 # run `tmux new -As main` by hand when the remote session must outlive the connection.
 [[ -z "$SSH_CONNECTION" ]] && ZSH_TMUX_AUTOSTART=true
+# Keep the window open (plain zsh) when tmux exits or detaches (prefix d),
+# instead of the plugin's default of closing the terminal with it.
+ZSH_TMUX_AUTOQUIT=false
 ZSH_TMUX_AUTOREFRESH=true
 
 ZSH_THEME="agnoster"
