@@ -27,9 +27,14 @@ fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 fpath+=(~/.docker/completions)
 source "$ZSH/oh-my-zsh.sh"
 
-# always hide user@host when on DEFAULT_USER (even over SSH/tmux)
+# hide user@host when on DEFAULT_USER; over ssh always show a distinct "ssh host"
+# segment (SSH_CONNECTION is propagated into tmux, SSH_CLIENT is not)
 prompt_context() {
-  if [[ "$USERNAME" != "$DEFAULT_USER" ]]; then
+  local who=""
+  [[ "$USERNAME" != "$DEFAULT_USER" ]] && who="%n@"
+  if [[ -n "$SSH_CONNECTION" ]]; then
+    prompt_segment magenta white "ssh ${who}%m"
+  elif [[ -n "$who" ]]; then
     prompt_segment "$AGNOSTER_CONTEXT_BG" "$AGNOSTER_CONTEXT_FG" "%(!.%{%F{$AGNOSTER_STATUS_ROOT_FG}%}.)%n@%m"
   fi
 }
