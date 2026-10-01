@@ -84,6 +84,11 @@ if vim.env.SSH_TTY then
     paste = { ['+'] = paste, ['*'] = paste },
   }
 end
+-- tmux sends End/Home as ESC[4~ / ESC[1~. When nvim's TERM is xterm-like (a pane
+-- that inherited TERM=xterm-ghostty, or nvim launched from Claude Code) it reads
+-- those as <Select>/<Find> and inserts them as text; treat them as End/Home.
+vim.keymap.set({ 'n', 'i', 'v', 'c' }, '<Select>', '<End>')
+vim.keymap.set({ 'n', 'i', 'v', 'c' }, '<Find>', '<Home>')
 vim.opt.termguicolors = true
 vim.opt.signcolumn = "yes"
 
