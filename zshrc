@@ -33,7 +33,7 @@ prompt_context() {
   local who=""
   [[ "$USERNAME" != "$DEFAULT_USER" ]] && who="%n@"
   if [[ -n "$SSH_CONNECTION" ]]; then
-    prompt_segment magenta black "ssh ${who}%m"
+    prompt_segment magenta black "🌐 ${who}%m"
   elif [[ -n "$who" ]]; then
     prompt_segment "$AGNOSTER_CONTEXT_BG" "$AGNOSTER_CONTEXT_FG" "%(!.%{%F{$AGNOSTER_STATUS_ROOT_FG}%}.)%n@%m"
   fi
