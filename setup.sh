@@ -691,6 +691,15 @@ main
 EOF
   echo "Patched custom.sh to show disk usage"
 fi
+
+# tmux2k's gpu plugin only detects NVIDIA through `lspci | grep VGA`, which
+# misses datacenter GPUs (listed as "3D controller") and needs pciutils. Detect
+# it by nvidia-smi instead (Linux only; the macOS branch reads ioreg and works).
+GPU_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/gpu.sh"
+if [[ "$OS" == "Linux" && -f "$GPU_SCRIPT" ]] && ! grep -qF 'command -v nvidia-smi' "$GPU_SCRIPT"; then
+  perl -pi -e 's|^\s*gpu=\$\(lspci -v.*$|        command -v nvidia-smi >/dev/null 2>&1 && gpu=NVIDIA|' "$GPU_SCRIPT"
+  echo "Patched gpu.sh to detect NVIDIA via nvidia-smi"
+fi
 # ---
 
 # --- ghostty
