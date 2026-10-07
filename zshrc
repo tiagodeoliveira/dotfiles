@@ -7,9 +7,11 @@ export CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1
 HISTSIZE=999999999
 SAVEHIST=999999999
 
-# Over ssh the local tmux already wraps this shell; don't nest another one.
-# Attach by hand when wanted: `tmux new -As main`.
-[[ -z "$SSH_CONNECTION" ]] && ZSH_TMUX_AUTOSTART=true
+# Over ssh, don't nest a tmux inside the client's tmux: ssh sends the client's TERM,
+# which is tmux-*/screen-* when the client is inside tmux. From a plain terminal
+# (xterm-ghostty, ...) the remote tmux starts as usual. Attach by hand with
+# `tmux new -As main`.
+[[ -z "$SSH_CONNECTION" || "$TERM" != (tmux|screen)* ]] && ZSH_TMUX_AUTOSTART=true
 # Keep the window open (plain zsh) when tmux exits or detaches (prefix d),
 # instead of the plugin's default of closing the terminal with it.
 ZSH_TMUX_AUTOQUIT=false
