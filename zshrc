@@ -7,7 +7,9 @@ export CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1
 HISTSIZE=999999999
 SAVEHIST=999999999
 
-ZSH_TMUX_AUTOSTART=true
+# Over ssh the local tmux already wraps this shell; don't nest another one.
+# Attach by hand when wanted: `tmux new -As main`.
+[[ -z "$SSH_CONNECTION" ]] && ZSH_TMUX_AUTOSTART=true
 # Keep the window open (plain zsh) when tmux exits or detaches (prefix d),
 # instead of the plugin's default of closing the terminal with it.
 ZSH_TMUX_AUTOQUIT=false
