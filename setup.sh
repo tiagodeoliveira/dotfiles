@@ -659,9 +659,11 @@ tmux source-file "$HOME/.tmux.conf"
 # provisioned months apart end up on different versions. Update on every run so
 # they converge. `git pull` refuses to overwrite a locally modified file, which
 # the patches below create, so discard them first; they are re-applied after.
+# custom.sh is an obsolete patch (it once held the disk widget) that machines set up
+# before the switch to the storage plugin still carry; it would block the update.
 TMUX2K_DIR="$HOME/.tmux/plugins/tmux2k"
 if [[ -d "$TMUX2K_DIR/.git" ]]; then
-  git -C "$TMUX2K_DIR" checkout -- plugins/cpu-temp.sh plugins/gpu.sh 2>/dev/null
+  git -C "$TMUX2K_DIR" checkout -- plugins/cpu-temp.sh plugins/gpu.sh plugins/custom.sh 2>/dev/null
 fi
 echo "Updating tmux plugins via tpm..."
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
