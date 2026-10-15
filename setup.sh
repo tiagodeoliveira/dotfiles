@@ -653,6 +653,18 @@ tmux start-server
 tmux new-session -d -s __dotfiles_setup
 tmux source-file "$HOME/.tmux.conf"
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
+
+# tpm's install_plugins only clones what is missing -- it never pulls -- so a
+# plugin stays pinned at the commit it was first cloned at, and machines
+# provisioned months apart end up on different versions. Update on every run so
+# they converge. `git pull` refuses to overwrite a locally modified file, which
+# the patches below create, so discard them first; they are re-applied after.
+TMUX2K_DIR="$HOME/.tmux/plugins/tmux2k"
+if [[ -d "$TMUX2K_DIR/.git" ]]; then
+  git -C "$TMUX2K_DIR" checkout -- plugins/cpu-temp.sh plugins/gpu.sh 2>/dev/null
+fi
+echo "Updating tmux plugins via tpm..."
+"$HOME/.tmux/plugins/tpm/bin/update_plugins" all
 tmux kill-session -t __dotfiles_setup
 
 if [[ "$OS" == "Darwin" ]]; then
@@ -660,8 +672,10 @@ if [[ "$OS" == "Darwin" ]]; then
   # which also matches AverageTemperature/MinimumTemperature/MaximumTemperature
   # substrings inside ioreg's BatteryData blob, plus a separate VirtualTemperature
   # key -- producing garbage on top of the real reading. Tighten it to match only
-  # the exact "Temperature" key. tpm's install_plugins only clones what's missing
-  # (no re-pull of existing plugins), so this survives a normal setup.sh re-run.
+  # the exact "Temperature" key. The plugin update above discards this file, so
+  # the patch is re-applied on every run.
+  # Known gap: this machine (Mac15,10, Darwin 27) exposes no "Temperature" key
+  # under AppleSmartBattery at all, so cpu-temp reads 0.0 there either way.
   CPU_TEMP_SCRIPT="$HOME/.tmux/plugins/tmux2k/plugins/cpu-temp.sh"
   if [[ -f "$CPU_TEMP_SCRIPT" ]] && ! grep -qF '"Temperature" =' "$CPU_TEMP_SCRIPT"; then
     sed -i '' "s/grep -i \"Temperature\"/grep -F '\"Temperature\" ='/" "$CPU_TEMP_SCRIPT"
