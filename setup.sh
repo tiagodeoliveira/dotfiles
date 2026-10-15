@@ -26,6 +26,9 @@ if [[ "$OS" == "Darwin" ]]; then
   # NONINTERACTIVE=1 covers both the installer below and every `brew` call
   # later in this script (formula installs, taps, etc.) - equivalent to apt -y.
   export NONINTERACTIVE=1
+  # Homebrew 5+ asks "Do you want to proceed?" before installing or upgrading;
+  # NONINTERACTIVE only covers the installer, so answer yes to those prompts too.
+  export HOMEBREW_NO_ASK=1
   echo "======= Checking Homebrew"
   if ! command -v brew &>/dev/null; then
     echo "Installing Homebrew..."
