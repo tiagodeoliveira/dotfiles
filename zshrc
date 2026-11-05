@@ -43,6 +43,36 @@ prompt_context() {
   fi
 }
 
+# Current kubectl context, like the AWS profile segment. Reads current-context from
+# the kubeconfig (first file in $KUBECONFIG that sets one, as kubectl does) instead of
+# running kubectl, which costs ~40ms on every prompt.
+prompt_kube() {
+  local cfg ctx
+  for cfg in ${(s.:.)${KUBECONFIG:-$HOME/.kube/config}}; do
+    [[ -r $cfg ]] || continue
+    ctx=${${(M)${(f)"$(<$cfg)"}:#current-context:*}#current-context:}
+    ctx=${ctx//[[:space:]\"\']/}
+    [[ -n $ctx ]] && break
+  done
+  [[ -n $ctx ]] && prompt_segment cyan black "K8S: ${ctx:gs/%/%%}"
+}
+
+# agnoster's build_prompt has no slot for it: same segments, prompt_kube after AWS
+build_prompt() {
+  RETVAL=$?
+  prompt_status
+  prompt_virtualenv
+  prompt_aws
+  prompt_kube
+  prompt_terraform
+  prompt_context
+  prompt_dir
+  prompt_git
+  prompt_bzr
+  prompt_hg
+  prompt_end
+}
+
 # arrow-up/down substring-search through history
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
