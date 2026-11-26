@@ -8,6 +8,16 @@ ratio = [1, 2, 5]
 max_width = 2000
 max_height = 2000
 
+# Formats zoom.yazi cannot read (ya.image_info fails on them, "unknown image
+# format"): keep yazi's own previewers for these, listed before zoom so they win.
+[[plugin.prepend_previewers]]
+mime = "image/{avif,hei?,jxl}"
+run = "magick"
+
+[[plugin.prepend_previewers]]
+mime = "image/svg+xml"
+run = "svg"
+
 # zoom.yazi: owns image previewing so zoom/pan state survives redraws --
 # without this, whatever else previews images would overwrite the zoomed
 # view on the next redraw (center-media narrowed to video/* below, so it
