@@ -746,6 +746,13 @@ fi
 
 # --- git
 echo "======= Configuring git"
+# ~/.gitconfig is overwritten on every run. Machine-local settings (e.g. a per-org
+# email via includeIf) go in ~/.gitconfig-extended, which gitconfig includes last.
+# Keep a copy when the file has drifted, so lines a tool added are recoverable.
+if [[ -f "$HOME/.gitconfig" ]] && ! cmp -s gitconfig "$HOME/.gitconfig"; then
+  cp "$HOME/.gitconfig" "$HOME/.gitconfig.bak"
+  echo "~/.gitconfig differed from the repo copy; old one saved as ~/.gitconfig.bak"
+fi
 cp gitconfig $HOME/.gitconfig
 cp gitignore_global $HOME/.gitignore_global
 # ---

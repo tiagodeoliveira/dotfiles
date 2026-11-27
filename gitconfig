@@ -16,3 +16,8 @@
 	gpgsign = true
 [gpg "ssh"]
 	allowedSignersFile = ~/.ssh/allowed_signers
+
+# Machine-local overrides (not in this repo, git ignores the include if the file is
+# missing). Keep this LAST: later settings win, so it can override [user] above.
+[include]
+	path = ~/.gitconfig-extended
